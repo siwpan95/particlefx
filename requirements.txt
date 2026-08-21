@@ -1,0 +1,9 @@
+# particle dependencies (auto-generated 2026-08-20)
+jsonschema
+moderngl
+numba
+numpy
+Pillow
+pygame-ce
+pytest
+taichi

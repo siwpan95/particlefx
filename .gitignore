@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+
+# GPU/JIT 验证环境（Python 3.12 venv，见 docs/enhancements.md）
+.venv312/
+.venv/
+
+# 输出产物
+*.mp4
+*.wav
+!examples/*.mp3
+examples/_mixed_audio*.mp3

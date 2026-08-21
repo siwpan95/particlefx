@@ -1,0 +1,851 @@
+{
+  "_meta": {
+    "version": "4.0",
+    "description": "声明式效果配方库。每个配方定义粒子的发射参数、物理行为、视觉属性。\n由 EffectsFactory 解析配置，调用 core.particle 的 Emitter/ForceField/etc 实例化。\n配色引用 palettes.json 的调色板名。",
+    "principles": [
+      "不改动已有 Python 效果工厂函数",
+      "新增效果只需添加 JSON 条目",
+      "每个 emitters[] 条目对应一个 Emitter 实例",
+      "force_fields[] 对应 ForceField 子类型",
+      "color 字段支持 'palette:category.name' 语法引用调色板"
+    ]
+  },
+  "categories": {
+    "cosmic": {
+      "label": "宇宙/太空",
+      "effects": ["starfield", "nebula_burst", "black_hole_accretion", "meteor_shower", "aurora_wave"]
+    },
+    "magic": {
+      "label": "魔法/奇幻",
+      "effects": ["arcane_blast", "healing_aura", "shadow_portal", "ice_storm", "lightning_strike", "blood_slash"]
+    },
+    "tech": {
+      "label": "科技/科幻",
+      "effects": ["hologram_scan", "data_burst", "shield_impact", "energy_beam", "glitch_explosion"]
+    },
+    "nature": {
+      "label": "自然/环境",
+      "effects": ["fireflies_dance", "pollen_drift", "bubble_stream", "ember_rising", "leaf_swirl"]
+    },
+    "celebration": {
+      "label": "庆典/UI",
+      "effects": ["confetti_burst", "sparkler_trail", "level_up_radiance", "ribbon_twirl", "coin_shower"]
+    },
+    "combat": {
+      "label": "战斗/破坏",
+      "effects": ["shield_shatter", "energy_clash", "smoke_screen", "ground_crack", "vortex_implosion"]
+    }
+  },
+  "effects": {
+    "starfield": {
+      "category": "cosmic",
+      "palette": "cosmic.stardust",
+      "max_particles": 800,
+      "emitters": [{
+        "x": "$center_x", "y": "$center_y",
+        "shape": "circle", "shape_radius": 600, "shape_falloff": true,
+        "rate": 60, "spread": 0.1, "speed": [20, 80],
+        "life": [3.0, 8.0], "size": [1, 4],
+        "color_over_lifetime": "fade_out",
+        "velocity_over_lifetime": "decelerate",
+        "alpha": [0.3, 1.0]
+      }],
+      "force_fields": [
+        {"type": "turbulence", "strength": 15, "scale": 120}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "nebula_burst": {
+      "category": "cosmic",
+      "palette": "cosmic.nebula",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 20,
+          "rate": "burst", "burst_count": 200,
+          "spread": 6.28, "speed": [100, 300],
+          "life": [1.5, 4.0], "size": [3, 18],
+          "color_over_lifetime": "cosmic.nebula",
+          "size_over_lifetime": "pulse:3",
+          "alpha": [0.6, 1.0]
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "point",
+          "rate": "burst", "burst_count": 80,
+          "spread": 6.28, "speed": [50, 150],
+          "life": [2.0, 5.0], "size": [8, 30],
+          "color_over_lifetime": "cosmic.stardust",
+          "velocity_over_lifetime": "decelerate",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "force_fields": [
+        {"type": "gravity", "strength": -30},
+        {"type": "noise", "strength": 50, "scale": 50}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "black_hole_accretion": {
+      "category": "cosmic",
+      "palette": "cosmic.blackhole",
+      "max_particles": 1000,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 200, "shape_thickness": 5,
+          "rate": 100, "spread": 0.05, "speed": [200, 400],
+          "life": [0.5, 2.0], "size": [2, 6],
+          "color_over_lifetime": "cosmic.blackhole",
+          "size_over_lifetime": "fade_out",
+          "alpha": [0.5, 1.0]
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 250,
+          "rate": 40, "spread": 6.28, "speed": [50, 100],
+          "life": [1.0, 3.0], "size": [1, 3],
+          "color_over_lifetime": "cosmic.nebula",
+          "emissive": true, "emissive_strength": 1.5
+        }
+      ],
+      "force_fields": [
+        {"type": "vortex", "x": "$x", "y": "$y", "strength": 400, "radius": 300},
+        {"type": "attraction", "x": "$x", "y": "$y", "strength": 250, "radius": 350}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "meteor_shower": {
+      "category": "cosmic",
+      "palette": "cosmic.meteor",
+      "max_particles": 400,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "edge", "shape_x1": "$x", "shape_y1": 0, "shape_x2": "$x+400", "shape_y2": 0,
+          "rate": 15, "spread": 0.3, "speed": [300, 600],
+          "life": [0.3, 0.8], "size": [3, 8],
+          "direction": [0.7, 1.0],
+          "color_over_lifetime": "cosmic.meteor",
+          "trail_enabled": true, "trail_length": 15,
+          "emissive": true, "emissive_strength": 3.0
+        }
+      ],
+      "force_fields": [
+        {"type": "gravity", "strength": 200},
+        {"type": "wind", "strength": -80}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "aurora_wave": {
+      "category": "cosmic",
+      "palette": "cosmic.aurora",
+      "max_particles": 600,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "edge", "shape_x1": 0, "shape_y1": "$y", "shape_x2": "$width", "shape_y2": "$y",
+          "rate": 80, "spread": 0.15, "speed": [20, 60],
+          "life": [3.0, 8.0], "size": [5, 20],
+          "direction": [-0.2, 0.2],
+          "color_over_lifetime": "cosmic.aurora",
+          "size_over_lifetime": "pulse:6",
+          "emissive": true, "emissive_strength": 2.5
+        }
+      ],
+      "force_fields": [
+        {"type": "noise", "strength": 40, "scale": 200},
+        {"type": "wind", "strength": 15}
+      ],
+      "blend_mode": "screen",
+      "bloom": true
+    },
+
+    "arcane_blast": {
+      "category": "magic",
+      "palette": "magic.arcane",
+      "max_particles": 400,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 10,
+          "rate": "burst", "burst_count": 120,
+          "spread": 6.28, "speed": [200, 500],
+          "life": [0.3, 1.2], "size": [4, 12],
+          "color_over_lifetime": "magic.arcane",
+          "size_over_lifetime": "fade_out"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "point",
+          "rate": "burst", "burst_count": 30,
+          "spread": 6.28, "speed": [100, 300],
+          "life": [0.5, 1.5], "size": [10, 25],
+          "color_over_lifetime": "magic.holy",
+          "emissive": true, "emissive_strength": 2.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 60, "shape_thickness": 3,
+          "rate": 40, "spread": 0, "speed": [80, 150],
+          "life": [2.0, 4.0], "size": [2, 5],
+          "color_over_lifetime": "magic.arcane",
+          "velocity_over_lifetime": "accelerate"
+        }
+      ],
+      "force_fields": [
+        {"type": "noise", "strength": 30, "scale": 30}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "healing_aura": {
+      "category": "magic",
+      "palette": "nature.nature_magic",
+      "max_particles": 400,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 80, "shape_thickness": 5,
+          "rate": 50, "spread": 0, "speed": [30, 60],
+          "life": [2.0, 5.0], "size": [3, 10],
+          "color_over_lifetime": "nature.nature_magic",
+          "direction": "$tangent",
+          "emissive": true, "emissive_strength": 1.5
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 15,
+          "rate": 30, "spread": 6.28, "speed": [2, 10],
+          "life": [3.0, 6.0], "size": [1, 4],
+          "color_over_lifetime": "magic.holy",
+          "velocity_over_lifetime": "decelerate"
+        }
+      ],
+      "force_fields": [
+        {"type": "attraction", "x": "$x", "y": "$y", "strength": -80, "radius": 120}
+      ],
+      "blend_mode": "screen",
+      "bloom": true
+    },
+    "shadow_portal": {
+      "category": "magic",
+      "palette": "magic.shadow",
+      "max_particles": 600,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 100, "shape_thickness": 8,
+          "rate": 100, "spread": 0.02, "speed": [40, 80],
+          "life": [1.0, 3.0], "size": [2, 8],
+          "color_over_lifetime": "magic.shadow",
+          "velocity_over_lifetime": "accelerate"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 60,
+          "rate": 40, "spread": 6.28, "speed": [10, 30],
+          "life": [2.0, 5.0], "size": [1, 4],
+          "color_over_lifetime": "energy.void",
+          "direction": "$spiral_inward",
+          "emissive": true, "emissive_strength": 1.0
+        }
+      ],
+      "force_fields": [
+        {"type": "vortex", "x": "$x", "y": "$y", "strength": 200, "radius": 200},
+        {"type": "attraction", "x": "$x", "y": "$y", "strength": 150, "radius": 250}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "ice_storm": {
+      "category": "magic",
+      "palette": "magic.ice_magic",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 140,
+          "rate": 80, "spread": 6.28, "speed": [100, 300],
+          "life": [0.5, 2.0], "size": [2, 8],
+          "color_over_lifetime": "magic.ice_magic",
+          "velocity_over_lifetime": "decelerate"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 10,
+          "rate": 30, "spread": 1.0, "speed": [50, 150],
+          "life": [1.5, 3.0], "size": [4, 15],
+          "color_over_lifetime": "magic.ice_magic",
+          "rotation": [0, 6.28], "angular_velocity": [-3, 3]
+        }
+      ],
+      "force_fields": [
+        {"type": "wind", "strength": 100},
+        {"type": "turbulence", "strength": 50, "scale": 60}
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "lightning_strike": {
+      "category": "magic",
+      "palette": "magic.lightning",
+      "max_particles": 300,
+      "emitters": [
+        {
+          "x": "$x", "y": 0,
+          "shape": "point",
+          "rate": "burst", "burst_count": 200,
+          "spread": 0.15, "speed": [400, 1200],
+          "life": [0.05, 0.2], "size": [2, 6],
+          "direction": [0, 1.0],
+          "color": [255, 255, 255],
+          "emissive": true, "emissive_strength": 5.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 30,
+          "rate": "burst", "burst_count": 60,
+          "spread": 6.28, "speed": [50, 200],
+          "life": [0.1, 0.4], "size": [3, 10],
+          "color_over_lifetime": "magic.lightning",
+          "emissive": true, "emissive_strength": 3.0
+        }
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "blood_slash": {
+      "category": "magic",
+      "palette": "magic.blood_magic",
+      "max_particles": 300,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "cone", "shape_angle": 1.2, "shape_radius": 80,
+          "rate": "burst", "burst_count": 100,
+          "spread": 0.3, "speed": [200, 500],
+          "life": [0.3, 1.0], "size": [3, 10],
+          "color_over_lifetime": "magic.blood_magic",
+          "direction": "$direction"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "point",
+          "rate": "burst", "burst_count": 30,
+          "spread": 6.28, "speed": [50, 150],
+          "life": [0.5, 1.5], "size": [6, 18],
+          "color_over_lifetime": "magic.blood_magic",
+          "emissive": true
+        }
+      ],
+      "force_fields": [
+        {"type": "gravity", "strength": 150}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+
+    "hologram_scan": {
+      "category": "tech",
+      "palette": "tech.hologram",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "edge", "shape_x1": "$x-150", "shape_y1": "$y-100", "shape_x2": "$x+150", "shape_y2": "$y-100",
+          "rate": 30, "spread": 0.01, "speed": [10, 20],
+          "life": [1.5, 3.0], "size": [1, 3],
+          "direction": [0, 1.0],
+          "color_over_lifetime": "tech.hologram",
+          "emissive": true, "emissive_strength": 2.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "rectangle", "shape_width": 300, "shape_height": 200,
+          "rate": 20, "spread": 0, "speed": [5, 15],
+          "life": [2.0, 4.0], "size": [1, 2],
+          "direction": [0, -1.0],
+          "color_over_lifetime": "tech.hologram"
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "data_burst": {
+      "category": "tech",
+      "palette": "tech.data_stream",
+      "max_particles": 400,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 15,
+          "rate": "burst", "burst_count": 150,
+          "spread": 6.28, "speed": [150, 400],
+          "life": [0.4, 1.2], "size": [2, 6],
+          "color_over_lifetime": "tech.glitch",
+          "size_over_lifetime": "fade_out"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 80,
+          "rate": "burst", "burst_count": 40,
+          "spread": 6.28, "speed": [50, 120],
+          "life": [1.0, 2.5], "size": [4, 12],
+          "color_over_lifetime": "tech.data_stream",
+          "velocity_over_lifetime": "decelerate",
+          "emissive": true, "emissive_strength": 1.5
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "shield_impact": {
+      "category": "tech",
+      "palette": "tech.energy_shield",
+      "max_particles": 350,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 100, "shape_thickness": 5,
+          "rate": "burst", "burst_count": 80,
+          "spread": 1.5, "speed": [200, 500],
+          "life": [0.2, 0.6], "size": [3, 8],
+          "color_over_lifetime": "tech.energy_shield",
+          "direction": "$normal_outward"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 110,
+          "rate": 60, "spread": 6.28, "speed": [30, 60],
+          "life": [0.5, 1.5], "size": [4, 14],
+          "color_over_lifetime": "tech.energy_shield",
+          "velocity_over_lifetime": "decelerate",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "force_fields": [
+        {"type": "attraction", "x": "$x", "y": "$y", "strength": -100, "radius": 200}
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "energy_beam": {
+      "category": "tech",
+      "palette": "energy.plasma",
+      "max_particles": 600,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "cone", "shape_angle": 0.15, "shape_radius": 200,
+          "rate": 200, "spread": 0.08, "speed": [300, 800],
+          "life": [0.1, 0.4], "size": [3, 8],
+          "direction": "$direction",
+          "color_over_lifetime": "energy.plasma",
+          "emissive": true, "emissive_strength": 4.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 10,
+          "rate": 80, "spread": 6.28, "speed": [20, 80],
+          "life": [0.3, 1.0], "size": [5, 15],
+          "color_over_lifetime": "energy.electric",
+          "emissive": true, "emissive_strength": 3.0
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "glitch_explosion": {
+      "category": "tech",
+      "palette": "tech.glitch",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 30,
+          "rate": "burst", "burst_count": 200,
+          "spread": 6.28, "speed": [100, 400],
+          "life": [0.2, 0.8], "size": [2, 10],
+          "color_over_lifetime": "tech.glitch",
+          "size_over_lifetime": "fade_out"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "rectangle", "shape_width": 200, "shape_height": 200,
+          "rate": "burst", "burst_count": 80,
+          "spread": 6.28, "speed": [20, 60],
+          "life": [0.8, 2.0], "size": [5, 15],
+          "color_over_lifetime": "tech.hologram",
+          "velocity_over_lifetime": "decelerate",
+          "emissive": true, "emissive_strength": 1.5
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+
+    "fireflies_dance": {
+      "category": "nature",
+      "palette": "nature.firefly",
+      "max_particles": 100,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 200,
+        "rate": 5, "spread": 6.28, "speed": [5, 20],
+        "life": [3.0, 10.0], "size": [2, 6],
+        "color_over_lifetime": "nature.firefly",
+        "size_over_lifetime": "pulse:5",
+        "emissive": true, "emissive_strength": 2.0,
+        "alpha": [0.4, 1.0]
+      }],
+      "force_fields": [
+        {"type": "noise", "strength": 20, "scale": 80}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "pollen_drift": {
+      "category": "nature",
+      "palette": "nature.pollen",
+      "max_particles": 200,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 150,
+        "rate": 15, "spread": 6.28, "speed": [5, 25],
+        "life": [4.0, 10.0], "size": [1, 3],
+        "color_over_lifetime": "nature.pollen",
+        "emissive": true, "emissive_strength": 1.5
+      }],
+      "force_fields": [
+        {"type": "wind", "strength": 20},
+        {"type": "turbulence", "strength": 30, "scale": 100}
+      ],
+      "bloom": true
+    },
+    "bubble_stream": {
+      "category": "nature",
+      "palette": "nature.bubble",
+      "max_particles": 150,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 30,
+        "rate": 20, "spread": 0.3, "speed": [20, 50],
+        "life": [1.0, 4.0], "size": [3, 15],
+        "direction": [0, -1.0],
+        "color_over_lifetime": "nature.bubble",
+        "size_over_lifetime": "fade_out",
+        "alpha": [0.2, 0.6]
+      }],
+      "force_fields": [
+        {"type": "wind", "strength": -15},
+        {"type": "noise", "strength": 10, "scale": 30}
+      ],
+      "blend_mode": "screen"
+    },
+    "ember_rising": {
+      "category": "nature",
+      "palette": "fire_heat.embers",
+      "max_particles": 200,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 40,
+        "rate": 30, "spread": 0.5, "speed": [40, 120],
+        "life": [1.0, 3.0], "size": [1, 5],
+        "direction": [0, -1.0],
+        "color_over_lifetime": "fire_heat.embers",
+        "size_over_lifetime": "fade_out",
+        "emissive": true, "emissive_strength": 1.5
+      }],
+      "force_fields": [
+        {"type": "gravity", "strength": -40},
+        {"type": "wind", "strength": 10},
+        {"type": "turbulence", "strength": 20, "scale": 40}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "leaf_swirl": {
+      "category": "nature",
+      "palette": "nature.leaf_autumn",
+      "max_particles": 80,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 100,
+        "rate": 6, "spread": 6.28, "speed": [30, 80],
+        "life": [3.0, 8.0], "size": [4, 12],
+        "color_over_lifetime": "nature.leaf_autumn",
+        "rotation": [0, 6.28], "angular_velocity": [-4, 4]
+      }],
+      "force_fields": [
+        {"type": "vortex", "x": "$x", "y": "$y", "strength": 100, "radius": 200},
+        {"type": "gravity", "strength": 30}
+      ],
+      "blend_mode": "normal"
+    },
+
+    "confetti_burst": {
+      "category": "celebration",
+      "palette": "celebration.confetti_rainbow",
+      "max_particles": 400,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "cone", "shape_angle": 1.5, "shape_radius": 80,
+          "rate": "burst", "burst_count": 150,
+          "spread": 0.5, "speed": [300, 600],
+          "life": [1.5, 4.0], "size": [5, 15],
+          "direction": [0, -1.0],
+          "color_over_lifetime": "celebration.confetti_rainbow",
+          "rotation": [0, 6.28], "angular_velocity": [-8, 8]
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "point",
+          "rate": "burst", "burst_count": 20,
+          "spread": 6.28, "speed": [50, 150],
+          "life": [1.0, 2.5], "size": [10, 30],
+          "color_over_lifetime": "celebration.sparkler_gold",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "force_fields": [
+        {"type": "gravity", "strength": 200},
+        {"type": "wind", "strength": 30}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "sparkler_trail": {
+      "category": "celebration",
+      "palette": "celebration.sparkler_gold",
+      "max_particles": 300,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "point",
+        "rate": 80, "spread": 0.2, "speed": [50, 150],
+        "life": [0.5, 1.5], "size": [1, 4],
+        "color_over_lifetime": "celebration.sparkler_gold",
+        "size_over_lifetime": "fade_out",
+        "emissive": true, "emissive_strength": 3.0
+      }],
+      "force_fields": [
+        {"type": "gravity", "strength": 60}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "level_up_radiance": {
+      "category": "celebration",
+      "palette": "magic.holy",
+      "max_particles": 300,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 80,
+          "rate": 40, "spread": 0, "speed": [80, 120],
+          "life": [1.5, 3.0], "size": [2, 6],
+          "direction": "$spiral_upward",
+          "color_over_lifetime": "magic.holy",
+          "emissive": true, "emissive_strength": 3.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 30,
+          "rate": 20, "spread": 6.28, "speed": [20, 50],
+          "life": [2.0, 4.0], "size": [1, 3],
+          "color_over_lifetime": "magic.nature_magic",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "ribbon_twirl": {
+      "category": "celebration",
+      "palette": "celebration.confetti_rose",
+      "max_particles": 200,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 60,
+        "rate": 40, "spread": 0.3, "speed": [60, 120],
+        "life": [2.0, 5.0], "size": [2, 6],
+        "direction": "$spiral_upward",
+        "color_over_lifetime": "celebration.confetti_rose",
+        "trail_enabled": true, "trail_length": 8,
+        "emissive": true, "emissive_strength": 2.0
+      }],
+      "force_fields": [
+        {"type": "vortex", "x": "$x", "y": "$y-100", "strength": 80, "radius": 150}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "coin_shower": {
+      "category": "celebration",
+      "palette": "celebration.confetti_gold",
+      "max_particles": 200,
+      "emitters": [{
+        "x": "$x", "y": "$y-50",
+        "shape": "cone", "shape_angle": 1.0, "shape_radius": 100,
+        "rate": "burst", "burst_count": 100,
+        "spread": 0.6, "speed": [200, 500],
+        "life": [1.0, 3.0], "size": [6, 18],
+        "direction": [0, -1.0],
+        "color_over_lifetime": "celebration.confetti_gold",
+        "rotation": [0, 6.28], "angular_velocity": [-10, 10],
+        "emissive": true, "emissive_strength": 1.5
+      }],
+      "force_fields": [
+        {"type": "gravity", "strength": 250}
+      ],
+      "blend_mode": "normal",
+      "bloom": true
+    },
+
+    "shield_shatter": {
+      "category": "combat",
+      "palette": "tech.energy_shield",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 120,
+          "rate": "burst", "burst_count": 120,
+          "spread": 1.0, "speed": [200, 600],
+          "life": [0.3, 1.0], "size": [3, 10],
+          "direction": "$normal_outward",
+          "color_over_lifetime": "tech.energy_shield",
+          "size_over_lifetime": "fade_out"
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 40,
+          "rate": "burst", "burst_count": 50,
+          "spread": 6.28, "speed": [50, 200],
+          "life": [0.5, 1.5], "size": [8, 20],
+          "color_over_lifetime": "tech.hologram",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "energy_clash": {
+      "category": "combat",
+      "palette": "energy.plasma",
+      "max_particles": 600,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 10,
+          "rate": "burst", "burst_count": 200,
+          "spread": 6.28, "speed": [300, 800],
+          "life": [0.1, 0.5], "size": [2, 8],
+          "color_over_lifetime": "energy.plasma",
+          "emissive": true, "emissive_strength": 3.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 100,
+          "rate": "burst", "burst_count": 60,
+          "spread": 6.28, "speed": [100, 250],
+          "life": [0.3, 0.8], "size": [5, 15],
+          "color_over_lifetime": "energy.electric",
+          "velocity_over_lifetime": "decelerate",
+          "emissive": true, "emissive_strength": 2.0
+        }
+      ],
+      "force_fields": [
+        {"type": "noise", "strength": 100, "scale": 30}
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    },
+    "smoke_screen": {
+      "category": "combat",
+      "palette": "smoke_mist.smoke_grey",
+      "max_particles": 400,
+      "emitters": [{
+        "x": "$x", "y": "$y",
+        "shape": "circle", "shape_radius": 60,
+        "rate": 50, "spread": 0.5, "speed": [20, 60],
+        "life": [2.0, 6.0], "size": [5, 30],
+        "direction": [0, -1.0],
+        "color_over_lifetime": "smoke_mist.smoke_grey",
+        "size_over_lifetime": "grow"
+      }],
+      "force_fields": [
+        {"type": "wind", "strength": 40},
+        {"type": "turbulence", "strength": 30, "scale": 80}
+      ],
+      "blend_mode": "normal"
+    },
+    "ground_crack": {
+      "category": "combat",
+      "palette": "fire_heat.embers",
+      "max_particles": 300,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "edge", "shape_x1": "$x-100", "shape_y1": "$y", "shape_x2": "$x+100", "shape_y2": "$y",
+          "rate": "burst", "burst_count": 80,
+          "spread": 0.8, "speed": [50, 200],
+          "life": [0.3, 1.5], "size": [2, 8],
+          "direction": [-0.3, 0.3],
+          "color_over_lifetime": "fire_heat.embers",
+          "emissive": true, "emissive_strength": 1.5
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "rectangle", "shape_width": 200, "shape_height": 5,
+          "rate": "burst", "burst_count": 40,
+          "spread": 0.2, "speed": [20, 60],
+          "life": [0.5, 2.0], "size": [4, 12],
+          "direction": [0, 1.0],
+          "color_over_lifetime": "smoke_mist.smoke_grey"
+        }
+      ],
+      "force_fields": [
+        {"type": "gravity", "strength": 100}
+      ],
+      "blend_mode": "additive",
+      "bloom": true
+    },
+    "vortex_implosion": {
+      "category": "combat",
+      "palette": "energy.void",
+      "max_particles": 500,
+      "emitters": [
+        {
+          "x": "$x", "y": "$y",
+          "shape": "circle", "shape_radius": 200, "shape_thickness": 3,
+          "rate": 120, "spread": 0.02, "speed": [100, 300],
+          "life": [0.5, 2.0], "size": [2, 8],
+          "color_over_lifetime": "energy.void",
+          "direction": "$spiral_inward",
+          "emissive": true, "emissive_strength": 2.0
+        },
+        {
+          "x": "$x", "y": "$y",
+          "shape": "sphere", "shape_radius": 50,
+          "rate": 40, "spread": 6.28, "speed": [10, 40],
+          "life": [1.0, 3.0], "size": [1, 4],
+          "color_over_lifetime": "energy.void",
+          "emissive": true, "emissive_strength": 1.5
+        }
+      ],
+      "force_fields": [
+        {"type": "vortex", "x": "$x", "y": "$y", "strength": 500, "radius": 300},
+        {"type": "attraction", "x": "$x", "y": "$y", "strength": 300, "radius": 350}
+      ],
+      "bloom": true,
+      "blend_mode": "additive"
+    }
+  }
+}

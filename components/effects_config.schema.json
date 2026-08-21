@@ -1,0 +1,203 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Particle Effects Config Schema",
+  "description": "effects_config.json 的 JSON Schema（v5.0 增强 ⑦）。由 EffectsFactory 在加载时校验。",
+  "type": "object",
+  "required": [
+    "categories",
+    "effects"
+  ],
+  "properties": {
+    "_meta": {
+      "type": "object"
+    },
+    "categories": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "label",
+          "effects"
+        ],
+        "properties": {
+          "label": {
+            "type": "string"
+          },
+          "effects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": {
+        "$ref": "#/definitions/effect"
+      }
+    }
+  },
+  "definitions": {
+    "effect": {
+      "type": "object",
+      "required": [
+        "emitters"
+      ],
+      "properties": {
+        "category": {
+          "type": "string"
+        },
+        "palette": {
+          "type": [
+            "string",
+            "array"
+          ]
+        },
+        "max_particles": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "blend_mode": {
+          "enum": [
+            "normal",
+            "additive",
+            "screen"
+          ]
+        },
+        "bloom": {
+          "type": "boolean"
+        },
+        "emitters": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/emitter"
+          }
+        },
+        "force_fields": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/force_field"
+          }
+        }
+      }
+    },
+    "emitter": {
+      "type": "object",
+      "required": [
+        "x",
+        "y"
+      ],
+      "properties": {
+        "x": {},
+        "y": {},
+        "shape": {
+          "enum": [
+            "point",
+            "sphere",
+            "cone",
+            "circle",
+            "rectangle",
+            "edge"
+          ]
+        },
+        "shape_radius": {
+          "type": "number"
+        },
+        "shape_width": {
+          "type": "number"
+        },
+        "shape_height": {
+          "type": "number"
+        },
+        "shape_angle": {
+          "type": "number"
+        },
+        "shape_thickness": {
+          "type": "number"
+        },
+        "shape_x1": {},
+        "shape_y1": {},
+        "shape_x2": {},
+        "shape_y2": {},
+        "rate": {},
+        "burst_count": {
+          "type": "integer"
+        },
+        "spread": {
+          "type": "number"
+        },
+        "direction": {},
+        "speed": {},
+        "life": {},
+        "size": {},
+        "color": {},
+        "color_over_lifetime": {},
+        "size_over_lifetime": {},
+        "velocity_over_lifetime": {
+          "enum": [
+            "accelerate",
+            "decelerate"
+          ]
+        },
+        "rotation": {
+          "type": "array"
+        },
+        "angular_velocity": {
+          "type": "array"
+        },
+        "alpha": {},
+        "trail_enabled": {
+          "type": "boolean"
+        },
+        "trail_length": {
+          "type": "integer"
+        },
+        "emissive": {
+          "type": "boolean"
+        },
+        "emissive_color": {
+          "type": "array",
+          "items": {
+            "type": "integer"
+          }
+        },
+        "emissive_strength": {
+          "type": "number"
+        }
+      }
+    },
+    "force_field": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "gravity",
+            "wind",
+            "vortex",
+            "turbulence",
+            "noise",
+            "attraction",
+            "magnet"
+          ]
+        },
+        "strength": {
+          "type": "number"
+        },
+        "x": {},
+        "y": {},
+        "scale": {
+          "type": "number"
+        },
+        "radius": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}
