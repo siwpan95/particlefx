@@ -1,4 +1,4 @@
-# Python
+﻿# Python
 __pycache__/
 *.py[cod]
 *.egg-info/
@@ -13,3 +13,6 @@ __pycache__/
 *.wav
 !examples/*.mp3
 examples/_mixed_audio*.mp3
+
+# 未跟踪产物/输出治理（2026-08-28）
+release/
