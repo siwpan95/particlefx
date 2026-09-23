@@ -1,5 +1,8 @@
 # Particle System（独立粒子系统）
 
+> 仓库：<https://gitee.com/siwpan/particle> ｜ 许可：MIT（见 [LICENSE](LICENSE)）
+> 注：文中 <PATH> 为路径占位符，请替换为你本机实际的目录 / 可执行文件路径。
+
 ## 设计理念
 
 1. **独立性**：不依赖任何项目，纯 Python + NumPy 实现
@@ -108,7 +111,7 @@ attractor = ForceField(field_type='attraction', x=400, y=300, strength=200.0)
 
 ```bash
 # 复制到 pywallpaper 项目
-cp -r particle/ G:/repos/pywallpaper/particle/
+cp -r particle/ <PATH>
 
 # 复制到其他目标项目（按需微调）
 cp -r particle/ <你的项目目录>/particle/
