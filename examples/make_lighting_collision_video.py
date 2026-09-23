@@ -13,8 +13,8 @@
   80-100s: EmitterShape 展示（sphere/cone/rectangle）
   100-120s: 光照开关对比（关/开交替）
 
-运行：
-    cd D:/allin/tools/particle
+运行（在仓库根目录下）：
+    cd <仓库根>
     python examples/make_lighting_collision_video.py
 
 依赖：
@@ -25,7 +25,8 @@ import sys, os, math, random, time, wave, subprocess, tempfile, shutil
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-PARTICLE_ROOT = "D:/allin/tools/particle"
+# 2026-09-28 去本地化：仓根改由本文件位置推导（原 D:/allin/tools/particle 已不存在）
+PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
 from core.particle import (

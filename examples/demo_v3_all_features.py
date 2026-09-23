@@ -13,8 +13,8 @@
 9. 光照模块（Lighting / Blinn-Phong）
 10. 音频联动框架
 
-运行方式：
-    cd D:/allin/tools/particle
+运行方式（在仓库根目录下）：
+    cd <仓库根>
     python examples/demo_v3_all_features.py
 """
 

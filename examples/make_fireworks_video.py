@@ -10,7 +10,7 @@ v4.0 变化：
 - 音效同步优化（发射/爆炸/crackle 与画面对齐）
 
 依赖：
-  D:/allin/tools/particle 粒子引擎 v4.0+
+  本仓粒子引擎 v4.0+（<仓库根>/core、<仓库根>/systems、<仓库根>/renderers）
   ffmpeg（视频编码）
   Pillow（图像合成）
 """
@@ -28,7 +28,8 @@ import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 
 # ====== 路径设置 ======
-PARTICLE_ROOT = "D:/allin/tools/particle"
+# 2026-09-28 去本地化：仓根改由本文件位置推导（原 D:/allin/tools/particle 已不存在）
+PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
 from systems.fireworks_system import FireworksSystem

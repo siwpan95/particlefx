@@ -1,8 +1,8 @@
 """
 流体渲染器 Demo — 展示 FluidRenderer 的流体视觉效果
 
-运行：
-    python D:/allin/tools/particle/examples/demo_fluid.py
+运行（在仓库根目录下）：
+    python examples/demo_fluid.py
 """
 
 import sys

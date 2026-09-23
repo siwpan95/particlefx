@@ -8,20 +8,27 @@
 
 编排：模拟一段 RPG 战斗场景序列
 
-运行：
-    cd D:/allin/tools/particle
+运行（在仓库根目录下）：
+    cd <仓库根>
     python examples/make_combat_video.py
 
 依赖：
   ffmpeg, Pillow, numpy
+
+音效：从环境变量 SOUNDS_DIR（或 SFX_ROOT）指向的音效库根目录加载；
+      未设置时回落到 <仓库根>/sfx/sounds，缺文件会逐条提示但不中断。
 """
 
 import sys, os, math, random, time, subprocess, tempfile, shutil
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-PARTICLE_ROOT = "D:/allin/tools/particle"
-SFX_ROOT = "D:/allin/tools/sfx/sounds"
+# 2026-09-28 去本地化：仓根改由本文件位置推导（原 D:/allin/tools/particle 已不存在）
+PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 2026-09-28 去本地化：音效库根改由 环境变量 SOUNDS_DIR/SFX_ROOT → 仓内 sfx/sounds 推导
+# （原 D:/allin/tools/sfx/sounds 已不存在）
+SFX_ROOT = (os.environ.get("SFX_ROOT") or os.environ.get("SOUNDS_DIR")
+            or os.path.join(PARTICLE_ROOT, "sfx", "sounds"))
 sys.path.insert(0, PARTICLE_ROOT)
 
 from systems.combat_effects import CombatEffectsManager
@@ -93,6 +100,10 @@ def build_combat_audio(duration_sec: float = DURATION,
                        sample_rate: int = 44100) -> np.ndarray:
     """用真实音效文件构建战斗音轨"""
     print("  加载真实战斗音效...")
+    if not os.path.isdir(SFX_ROOT):
+        print(f"    ! 音效库目录不存在：{SFX_ROOT}")
+        print("      请设置环境变量 SOUNDS_DIR（或 SFX_ROOT）指向音效库根目录；"
+              "缺失音效将静音处理。")
 
     sfx = {}
     load_map = {

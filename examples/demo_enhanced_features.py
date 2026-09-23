@@ -10,8 +10,8 @@ particle 系统增强特性演示
 5. Velocity over Lifetime（速度曲线）
 6. 子发射器（粒子死亡时触发新粒子）
 
-运行方式：
-    cd D:/allin/tools/particle
+运行方式（在仓库根目录下）：
+    cd <仓库根>
     python examples/demo_enhanced_features.py
 """
 

@@ -7,9 +7,9 @@
 用法:
     from sfx_mixer import load_audio, mix_timeline, write_wav
 
-    # 加载音效文件
-    rain = load_audio("D:/allin/tools/sfx/sounds/light-rain-01.mp3")
-    thunder = load_audio("D:/allin/tools/sfx/sounds/thunder7.wav")
+    # 加载音效文件（音效库根目录由调用方决定，可用环境变量 SOUNDS_DIR / SFX_ROOT 指定）
+    rain = load_audio("<SOUNDS_DIR>/light-rain-01.mp3")
+    thunder = load_audio("<SOUNDS_DIR>/thunder7.wav")
 
     # 按时间轴混合（音效, 起始秒, 音量, 淡入秒, 淡出秒）
     mixed = mix_timeline([
