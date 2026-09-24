@@ -25,7 +25,7 @@ import sys, os, math, random, time, wave, subprocess, tempfile, shutil
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 
-# 2026-09-23 去本地化：仓根改由本文件位置推导（原 D:/allin/tools/particle 已不存在）
+# 2026-09-23 去本地化：仓根改由本文件位置推导（原路径已不存在）
 PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
