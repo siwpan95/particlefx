@@ -9,7 +9,7 @@
 - 死亡消散效果
 
 使用示例：
-    from systems.combat_effects import CombatEffectsManager
+    from particlefx.systems.combat_effects import CombatEffectsManager
 
     mgr = CombatEffectsManager()
     # 攻击命中
@@ -24,12 +24,7 @@ import random
 import math
 import time
 
-try:
-    from core.particle import Particle, ForceField
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from core.particle import Particle, ForceField
+from ..core.particle import Particle, ForceField
 
 
 class CombatEffectsManager:

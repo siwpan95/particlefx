@@ -40,7 +40,7 @@ class TestWebMain:
     def test_renderer_kwargs_match_api(self):
         """web_main.py 使用的 PygameRenderer 参数必须真实存在"""
         pygame = pytest.importorskip("pygame")
-        from renderers.pygame_renderer import PygameRenderer
+        from particlefx.renderers.pygame_renderer import PygameRenderer
         sig = inspect.signature(PygameRenderer.__init__)
         for kw in ("blend_mode", "bloom_enabled", "bloom_intensity"):
             assert kw in sig.parameters, f"PygameRenderer 缺少参数 {kw}"

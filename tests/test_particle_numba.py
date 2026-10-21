@@ -10,10 +10,10 @@ import random
 import numpy as np
 import pytest
 
-from core.particle_numpy import (
+from particlefx.core.particle_numpy import (
     ParticleSystemNumpy, NumpyForceGravity, NumpyForceWind, NumpyForceDrag,
 )
-from core.particle_numba import (
+from particlefx.core.particle_numba import (
     HAS_NUMBA, NumbaParticleSystem, update_kernel_numpy, _update_kernel,
 )
 

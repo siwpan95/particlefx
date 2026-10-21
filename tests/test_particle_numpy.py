@@ -12,7 +12,7 @@ import pytest
 import numpy as np
 from PIL import Image
 
-from core.particle_numpy import (
+from particlefx.core.particle_numpy import (
     ParticleSystemNumpy,
     NumpyForceGravity,
     NumpyForceWind,

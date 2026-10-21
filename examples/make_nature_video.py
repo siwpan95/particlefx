@@ -32,14 +32,14 @@ SFX_ROOT = (os.environ.get("SFX_ROOT") or os.environ.get("SOUNDS_DIR")
             or os.path.join(PARTICLE_ROOT, "sfx", "sounds"))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from core.particle import ParticleSystem, Emitter, ForceField, NoiseField
-from components.effects import (
+from particlefx.core.particle import ParticleSystem, Emitter, ForceField, NoiseField
+from particlefx.components.effects import (
     create_explosion, create_fire, create_rain, create_snow,
     create_magic_circle, create_fountain, create_smoke, create_sparkle,
     create_trail, create_vortex_effect, create_collision_sparks,
     create_lighted_firework, create_magnet_field,
 )
-from renderers.pil_renderer import PILRenderer, LayeredPILRenderer, post_process_bloom
+from particlefx.renderers.pil_renderer import PILRenderer, LayeredPILRenderer, post_process_bloom
 from examples.sfx_mixer import load_audio, mix_timeline, write_wav as sfx_write_wav
 
 # ================================================================

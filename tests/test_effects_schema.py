@@ -6,7 +6,7 @@ import pathlib
 
 import pytest
 
-from components.effects_factory import (
+from particlefx.components.effects_factory import (
     EffectsFactory, _validate_config_structure, _load_json, HAS_JSONSCHEMA,
 )
 
@@ -15,7 +15,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 class TestSchemaFile:
     def test_schema_exists_and_valid_json(self):
-        p = ROOT / "components" / "effects_config.schema.json"
+        p = ROOT / "particlefx" / "components" / "effects_config.schema.json"
         data = json.loads(p.read_text(encoding="utf-8"))
         assert data["type"] == "object"
         assert "definitions" in data
@@ -23,7 +23,7 @@ class TestSchemaFile:
         assert "force_field" in data["definitions"]
 
     def test_schema_requires_emitters(self):
-        p = ROOT / "components" / "effects_config.schema.json"
+        p = ROOT / "particlefx" / "components" / "effects_config.schema.json"
         data = json.loads(p.read_text(encoding="utf-8"))
         effect = data["definitions"]["effect"]
         assert "emitters" in effect.get("required", [])
@@ -66,7 +66,7 @@ class TestFactoryValidation:
 
     def test_strict_mode_rejects_broken_config(self, monkeypatch):
         # 直接替换配置加载函数：坏配置 → strict 模式必须抛 ValueError
-        import components.effects_factory as ef
+        import particlefx.components.effects_factory as ef
         broken = {"categories": {}, "effects": {"bad": {}}}
         real_palettes = ef._load_json("palettes.json")
 
@@ -85,7 +85,7 @@ class TestFactoryValidation:
         assert "警告" not in captured.out
 
     def test_singleton_still_works(self):
-        from components.effects_factory import get_factory
+        from particlefx.components.effects_factory import get_factory
         f1 = get_factory()
         f2 = get_factory()
         assert f1 is f2

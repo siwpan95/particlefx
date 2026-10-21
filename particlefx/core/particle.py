@@ -1286,7 +1286,7 @@ class ParticleSystem:
         self._grid_boxes_signature: Optional[tuple] = None
         self._grid_needs_particles = False
         if self.use_spatial_hash:
-            from core.spatial_hash import SpatialHashGrid
+            from .spatial_hash import SpatialHashGrid
             self._grid = SpatialHashGrid(cell_size=spatial_hash_cell_size)
         
         # 碰撞系统

@@ -32,12 +32,12 @@ from PIL import Image, ImageDraw, ImageFilter
 PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from systems.fireworks_system import FireworksSystem
-from renderers.pil_renderer import LayeredPILRenderer, post_process_bloom
-from core.particle import Particle
+from particlefx.systems.fireworks_system import FireworksSystem
+from particlefx.renderers.pil_renderer import LayeredPILRenderer, post_process_bloom
+from particlefx.core.particle import Particle
 # 尝试导入流体渲染器
 try:
-    from renderers.fluid_renderer import FluidRenderer as CPUFluidRenderer
+    from particlefx.renderers.fluid_renderer import FluidRenderer as CPUFluidRenderer
     HAS_CPU_FLUID = True
 except ImportError:
     HAS_CPU_FLUID = False

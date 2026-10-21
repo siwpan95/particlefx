@@ -5,11 +5,11 @@ import math
 import random
 import pytest
 
-from core.particle import (
+from particlefx.core.particle import (
     Particle, ParticlePool, ParticleSystem, Emitter, ForceField,
     CollisionBox, CollisionBoundary,
 )
-from core.spatial_hash import SpatialHashGrid
+from particlefx.core.spatial_hash import SpatialHashGrid
 
 
 # ================================================================

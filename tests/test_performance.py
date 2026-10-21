@@ -11,11 +11,11 @@ import time
 import pytest
 import numpy as np
 
-from core.particle import (
+from particlefx.core.particle import (
     Particle, ParticleSystem, Emitter, ForceField,
     EmitterShape, NoiseField, CollisionBoundary,
 )
-from core.particle_numpy import (
+from particlefx.core.particle_numpy import (
     ParticleSystemNumpy, NumpyForceGravity, NumpyForceDrag,
 )
 

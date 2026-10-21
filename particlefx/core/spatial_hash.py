@@ -12,7 +12,7 @@
 - 查询结果去重；remove 操作按登记时记录反查
 
 用法：
-    from core.spatial_hash import SpatialHashGrid
+    from .spatial_hash import SpatialHashGrid
 
     grid = SpatialHashGrid(cell_size=64.0)
     grid.insert_rect(box, box.x, box.y, box.width, box.height)

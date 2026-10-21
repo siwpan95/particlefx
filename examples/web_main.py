@@ -21,8 +21,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import pygame
 
-from systems.fireworks_system import FireworksSystem
-from renderers.pygame_renderer import PygameRenderer
+from particlefx.systems.fireworks_system import FireworksSystem
+from particlefx.renderers.pygame_renderer import PygameRenderer
 
 
 async def main():

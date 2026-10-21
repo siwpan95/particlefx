@@ -17,7 +17,7 @@
 适用：1000粒子以内实时渲染（60fps）。
 
 使用示例：
-    from renderers.fluid_renderer import FluidRenderer
+    from .fluid_renderer import FluidRenderer
     
     renderer = FluidRenderer(width=800, height=600)
     
@@ -31,9 +31,7 @@
 """
 
 import numpy as np
-import pygame
-from pygame import Surface
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 
 
 # ================================================================
@@ -250,20 +248,23 @@ class FluidRenderer:
     
     def render_to_surface(self,
                           sys_np,
-                          pygame_screen: Optional[Surface] = None,
+                          pygame_screen: Optional[Any] = None,
                           background: Optional[np.ndarray] = None,
-                          ) -> Surface:
+                          ) -> Any:
         """
         渲染到 Pygame Surface（直接 blit 到屏幕用）。
-        
+
         Args:
             sys_np        : ParticleSystemNumpy 实例
             pygame_screen : 目标 Surface（None=创建新 Surface）
             background    : 背景图
-        
+
         Returns:
             Pygame Surface
         """
+        # pygame 是可选依赖（pip install particlefx[pygame]），按需延迟导入
+        import pygame
+
         img_array = self.render_from_numpy_system(sys_np, background)
         
         if pygame_screen is not None:

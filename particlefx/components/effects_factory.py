@@ -5,7 +5,7 @@
 不改动 effects.py 的已有工厂函数，新增效果只需修改 JSON。
 
 用法：
-  from components.effects_factory import EffectsFactory
+  from .effects_factory import EffectsFactory
   factory = EffectsFactory()
   system = factory.create('nebula_burst', x=400, y=300)
 """
@@ -23,24 +23,13 @@ try:
 except ImportError:
     HAS_JSONSCHEMA = False
 
-try:
-    from core.particle import (
-        ParticleSystem, Emitter, ForceField, EmitterShape,
-        FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
-        gradient_to_curve, size_curve_fadeout, size_curve_pulse,
-        velocity_curve_accelerate, velocity_curve_decelerate,
-        create_vortex, create_turbulence, create_magnet,
-    )
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from core.particle import (
-        ParticleSystem, Emitter, ForceField, EmitterShape,
-        FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
-        gradient_to_curve, size_curve_fadeout, size_curve_pulse,
-        velocity_curve_accelerate, velocity_curve_decelerate,
-        create_vortex, create_turbulence, create_magnet,
-    )
+from ..core.particle import (
+    ParticleSystem, Emitter, ForceField, EmitterShape,
+    FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
+    gradient_to_curve, size_curve_fadeout, size_curve_pulse,
+    velocity_curve_accelerate, velocity_curve_decelerate,
+    create_vortex, create_turbulence, create_magnet,
+)
 
 # ============================================================
 #  资源加载

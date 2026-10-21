@@ -1,5 +1,5 @@
 """粒子效果组件包"""
-from components.effects import (
+from .effects import (
     create_explosion,
     create_fire,
     create_rain,
@@ -12,6 +12,12 @@ from components.effects import (
     get_effect,
     list_effects,
     EFFECT_REGISTRY,
+)
+from .effects_factory import (
+    EffectsFactory,
+    get_factory,
+    create_effect,
+    list_all_effects,
 )
 
 __all__ = [
@@ -27,4 +33,9 @@ __all__ = [
     'get_effect',
     'list_effects',
     'EFFECT_REGISTRY',
+    # 声明式效果工厂（JSON 配方驱动）
+    'EffectsFactory',
+    'get_factory',
+    'create_effect',
+    'list_all_effects',
 ]

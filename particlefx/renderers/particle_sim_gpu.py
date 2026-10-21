@@ -11,7 +11,7 @@ GPU 粒子模拟器（v5.0 增强 ⑨ — ModernGL Compute Shader）
 
 用法：
     import moderngl
-    from renderers.particle_sim_gpu import GPUParticleSimulator
+    from .particle_sim_gpu import GPUParticleSimulator
 
     ctx = moderngl.create_context(standalone=True)
     sim = GPUParticleSimulator(ctx, max_particles=10000,

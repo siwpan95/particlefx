@@ -9,7 +9,7 @@ Particle 核心模块单元测试
 import math
 import random
 import pytest
-from core.particle import (
+from particlefx.core.particle import (
     Particle,
     ParticleSystem,
     Emitter,

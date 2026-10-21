@@ -29,13 +29,13 @@ from PIL import Image, ImageDraw, ImageFont
 PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from core.particle import (
+from particlefx.core.particle import (
     Particle, ParticleSystem, Emitter, ForceField,
     EmitterShape, CollisionBoundary, CollisionBox,
     LightSource, BlinnPhongParams,
     create_point_light, create_directional_light, create_ambient_light,
 )
-from renderers.pil_renderer import PILRenderer, post_process_bloom
+from particlefx.renderers.pil_renderer import PILRenderer, post_process_bloom
 
 # ================================================================
 #  视频参数

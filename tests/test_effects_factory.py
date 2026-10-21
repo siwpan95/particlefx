@@ -7,8 +7,8 @@ EffectsFactory 单元测试
 
 import math
 import pytest
-from components.effects_factory import EffectsFactory, create_effect, get_factory
-from core.particle import EmitterShape
+from particlefx.components.effects_factory import EffectsFactory, create_effect, get_factory
+from particlefx.core.particle import EmitterShape
 
 
 @pytest.fixture

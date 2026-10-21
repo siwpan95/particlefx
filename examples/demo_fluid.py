@@ -16,7 +16,7 @@ import numpy as np
 import random
 import math
 
-from renderers.fluid_renderer import FluidRenderer
+from particlefx.renderers.fluid_renderer import FluidRenderer
 
 
 # ================================================================

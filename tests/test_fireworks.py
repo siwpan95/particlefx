@@ -5,7 +5,7 @@ FireworksSystem 单元测试
 """
 
 import pytest
-from systems.fireworks_system import FireworksSystem, create_fireworks
+from particlefx.systems.fireworks_system import FireworksSystem, create_fireworks
 
 
 @pytest.fixture

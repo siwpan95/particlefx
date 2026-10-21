@@ -12,7 +12,7 @@
 - 与 LayeredPILRenderer.render_to_image(postfx=...) 集成
 
 用法：
-    from renderers.postfx import PostFXChain, BloomStep, TonemapStep, VignetteStep
+    from .postfx import PostFXChain, BloomStep, TonemapStep, VignetteStep
 
     chain = PostFXChain([
         BloomStep(radius=12, strength=0.6, threshold=150),
@@ -34,7 +34,7 @@ from typing import Any, Dict, List, Optional
 import numpy as np
 from PIL import Image, ImageFilter
 
-from renderers.pil_renderer import post_process_bloom  # 复用现有 Bloom 实现
+from .pil_renderer import post_process_bloom  # 复用现有 Bloom 实现
 
 
 # ================================================================

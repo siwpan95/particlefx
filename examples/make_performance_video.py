@@ -25,11 +25,11 @@ from PIL import Image, ImageDraw, ImageFont
 PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from core.particle import ParticleSystem, Emitter, ForceField
-from core.particle_numpy import (
+from particlefx.core.particle import ParticleSystem, Emitter, ForceField
+from particlefx.core.particle_numpy import (
     ParticleSystemNumpy, NumpyForceGravity, NumpyForceDrag, NumpyForceTurbulence,
 )
-from renderers.pil_renderer import PILRenderer, post_process_bloom
+from particlefx.renderers.pil_renderer import PILRenderer, post_process_bloom
 
 # ================================================================
 #  视频参数

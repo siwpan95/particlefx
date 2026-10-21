@@ -11,7 +11,7 @@ GPU 粒子渲染器 v1.0 — ModernGL 加速版
 
 用法：
   import pygame
-  from renderers.particle_renderer_moderngl import GPUParticleRenderer
+  from .particle_renderer_moderngl import GPUParticleRenderer
 
   screen = pygame.display.set_mode((800, 600), pygame.OPENGL | pygame.DOUBLEBUF)
   renderer = GPUParticleRenderer(screen, max_particles=10000)

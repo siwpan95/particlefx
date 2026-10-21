@@ -10,7 +10,7 @@
 - 对外接口保持向后兼容，旧代码无需修改
 
 使用示例：
-    from systems.fireworks_system import FireworksSystem
+    from .fireworks_system import FireworksSystem
 
     fw = FireworksSystem(width=800, height=600)
     while running:
@@ -22,22 +22,11 @@ import random
 import math
 from typing import Optional
 
-try:
-    from core.particle import (
-        Particle, ParticleSystem, Emitter, ForceField,
-        EmitterShape, gradient_to_curve, size_curve_fadeout,
-        create_point_light, create_ambient_light,
-    )
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from core.particle import (
-        Particle, ParticleSystem, Emitter, ForceField,
-        EmitterShape, gradient_to_curve, size_curve_fadeout,
-        create_point_light, create_ambient_light,
-    )
-
-from renderers.pil_renderer import LayeredPILRenderer
+from ..core.particle import (
+    Particle, ParticleSystem, Emitter, ForceField,
+    EmitterShape, gradient_to_curve, size_curve_fadeout,
+    create_point_light, create_ambient_light,
+)
 
 
 # ================================================================
@@ -392,7 +381,7 @@ class FireworksSystem:
             for p in all_particles:
                 if not p.is_alive():
                     continue
-                from core.particle import apply_lighting_to_particle
+                from ..core.particle import apply_lighting_to_particle
                 r, g, b, a = apply_lighting_to_particle(
                     p, self._burst_sys.lights,
                     self._burst_sys.blinn_phong,
@@ -452,6 +441,8 @@ class FireworksSystem:
         """
         if renderer is None:
             if not hasattr(self, '_default_renderer'):
+                # Pillow 是可选依赖（pip install particlefx[pil]），按需延迟导入
+                from ..renderers.pil_renderer import LayeredPILRenderer
                 self._default_renderer = LayeredPILRenderer(
                     width=self.width, height=self.height,
                     bloom=True, bloom_radius=10,

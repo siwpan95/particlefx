@@ -24,13 +24,13 @@ from PIL import Image, ImageDraw, ImageFont, ImageFilter
 PARTICLE_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from core.particle import Particle, ParticleSystem, Emitter, ForceField
-from components.effects import create_explosion
-from renderers.pil_renderer import PILRenderer, post_process_bloom
+from particlefx.core.particle import Particle, ParticleSystem, Emitter, ForceField
+from particlefx.components.effects import create_explosion
+from particlefx.renderers.pil_renderer import PILRenderer, post_process_bloom
 
 # 尝试导入 FluidRenderer
 try:
-    from renderers.fluid_renderer import FluidRenderer
+    from particlefx.renderers.fluid_renderer import FluidRenderer
     HAS_FLUID = True
 except ImportError:
     HAS_FLUID = False

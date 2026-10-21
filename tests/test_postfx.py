@@ -5,7 +5,7 @@ import numpy as np
 import pytest
 from PIL import Image
 
-from renderers.postfx import (
+from particlefx.renderers.postfx import (
     PostFXChain, PostFXStep, BloomStep, TonemapStep, VignetteStep,
     ChromaticAberrationStep, GrainStep,
     default_fireworks_chain, default_clean_chain, STEP_REGISTRY,
@@ -141,8 +141,8 @@ class TestPresets:
 
 class TestRendererIntegration:
     def test_layered_renderer_accepts_postfx(self):
-        from core.particle import Particle
-        from renderers.pil_renderer import LayeredPILRenderer
+        from particlefx.core.particle import Particle
+        from particlefx.renderers.pil_renderer import LayeredPILRenderer
         r = LayeredPILRenderer(width=128, height=96)
         p = Particle(x=64, y=48, vx=0, vy=0, life=1.0, max_life=2.0,
                      size=6.0, color=(255, 200, 80), alpha=1.0)

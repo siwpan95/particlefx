@@ -14,7 +14,7 @@ import math
 import numpy as np
 from PIL import Image, ImageDraw, ImageFilter
 from typing import List, Optional, Tuple
-from core.particle import Particle, Renderer
+from ..core.particle import Particle, Renderer
 
 
 # ================================================================

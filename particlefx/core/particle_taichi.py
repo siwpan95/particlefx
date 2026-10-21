@@ -12,7 +12,7 @@ WCSPH（弱可压缩光滑粒子流体动力学）2D 实现：
 3.14 用户请使用 Python 3.12/3.13 环境或替代方案（JAX / NVIDIA Warp / Cython）。
 
 用法：
-    from core.particle_taichi import TaichiSPHSystem
+    from .particle_taichi import TaichiSPHSystem
 
     sph = TaichiSPHSystem(max_particles=4096, width=800, height=600)
     sph.add_fluid_block(x=300, y=80, w=120, h=120, spacing=6.0)

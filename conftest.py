@@ -1,6 +1,6 @@
 """
 pytest 配置 — 将项目根目录加入 sys.path，
-使 `from core.particle import ...` 等导入在测试中直接可用。
+使 `from particlefx.core.particle import ...` 等导入在测试中直接可用。
 """
 import os, sys
 

@@ -8,7 +8,7 @@ import math
 
 import pytest
 
-import core.particle_taichi as pta
+import particlefx.core.particle_taichi as pta
 
 
 class TestFallbackWithoutTaichi:
@@ -27,7 +27,7 @@ class TestFallbackWithoutTaichi:
     def test_module_compiles(self):
         import pathlib
         src = (pathlib.Path(__file__).resolve().parent.parent
-               / "core" / "particle_taichi.py").read_text(encoding="utf-8")
+               / "particlefx" / "core" / "particle_taichi.py").read_text(encoding="utf-8")
         compile(src, "core/particle_taichi.py", "exec")
 
 

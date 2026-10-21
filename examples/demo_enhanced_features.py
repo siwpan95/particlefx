@@ -23,14 +23,14 @@ import time
 # 确保可以导入 core 模块
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.particle import (
+from particlefx.core.particle import (
     Particle, ParticleSystem, Emitter, ForceField, NoiseField,
     FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
     EXPLOSION_SIZE_CURVE, SPARK_SIZE_CURVE,
     gradient_to_curve, size_curve_fadeout, size_curve_pulse,
     velocity_curve_accelerate, velocity_curve_decelerate,
 )
-from core.particle import lerp_color, evaluate_curve, evaluate_color_curve
+from particlefx.core.particle import lerp_color, evaluate_curve, evaluate_color_curve
 
 
 def print_separator(char='=', length=60):
@@ -259,7 +259,7 @@ def demo_full_integration():
     print("演示 7：综合效果 — 增强版爆炸（所有特性整合）")
     print_separator('-')
 
-    from components.effects import create_explosion
+    from particlefx.components.effects import create_explosion
 
     # 创建增强版爆炸
     system = create_explosion(x=0, y=0, intensity=1.0)

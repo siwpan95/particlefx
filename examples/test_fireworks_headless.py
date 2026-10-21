@@ -10,8 +10,8 @@ import os
 # 添加父目录到路径（用于导入 particle 模块）
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.particle import ParticleSystem, Emitter, ForceField, Particle
-from renderers.pil_renderer import PILRenderer
+from particlefx.core.particle import ParticleSystem, Emitter, ForceField, Particle
+from particlefx.renderers.pil_renderer import PILRenderer
 from PIL import Image
 
 

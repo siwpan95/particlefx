@@ -6,7 +6,7 @@ import random
 
 import pytest
 
-from core.particle import (
+from particlefx.core.particle import (
     Particle, ParticleSystem, Emitter, ForceField, LightSource,
     ParticleAttractor, create_attractor,
 )

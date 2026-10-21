@@ -34,9 +34,9 @@ SFX_ROOT = (os.environ.get("SFX_ROOT") or os.environ.get("SOUNDS_DIR")
             or os.path.join(PARTICLE_ROOT, "sfx", "sounds"))
 sys.path.insert(0, PARTICLE_ROOT)
 
-from systems.weather_system import WeatherSystem
-from core.particle import Particle, ForceField
-from renderers.pil_renderer import PILRenderer, LayeredPILRenderer, post_process_bloom
+from particlefx.systems.weather_system import WeatherSystem
+from particlefx.core.particle import Particle, ForceField
+from particlefx.renderers.pil_renderer import PILRenderer, LayeredPILRenderer, post_process_bloom
 from examples.sfx_mixer import load_audio, mix_timeline, write_wav as sfx_write_wav
 
 # ================================================================

@@ -8,11 +8,11 @@
 import math
 import random
 import pytest
-from core.particle import (
+from particlefx.core.particle import (
     ParticleSystem, Emitter, ForceField, NoiseField,
     EmitterShape, CollisionBoundary,
 )
-from components.effects import (
+from particlefx.components.effects import (
     create_explosion, create_fire, create_rain, create_snow,
     create_magic_circle, create_fountain, create_smoke, create_sparkle,
     create_trail, create_vortex_effect, create_collision_sparks,

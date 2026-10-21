@@ -9,7 +9,7 @@
 - 渐变过渡
 
 使用示例：
-    from systems.weather_system import WeatherSystem
+    from particlefx.systems.weather_system import WeatherSystem
 
     weather = WeatherSystem(width=800, height=600)
     weather.set_weather('rain')
@@ -21,12 +21,7 @@
 import random
 import math
 
-try:
-    from core.particle import Particle, ForceField
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from core.particle import Particle, ForceField
+from ..core.particle import Particle, ForceField
 
 
 class WeatherSystem:

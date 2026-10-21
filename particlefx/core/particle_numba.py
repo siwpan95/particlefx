@@ -9,7 +9,7 @@ Numba 加速粒子更新内核（v5.0 增强 ② — 可选依赖，零开销）
   旧版本请升级：pip install -U numba
 
 用法：
-    from core.particle_numba import NumbaParticleSystem
+    from .particle_numba import NumbaParticleSystem
 
     sys_np = NumbaParticleSystem(max_particles=5000, gravity=3.0, wind=0.0, drag=0.99)
     sys_np.emit_burst(x=400, y=300, count=200, speed_range=(2, 10))
@@ -107,7 +107,7 @@ def update_kernel_numpy(pos, vel, life, max_life, alpha, alive, mass,
 #  NumbaParticleSystem — 粒子系统（JIT 快速路径 + 完整力场回退）
 # ================================================================
 
-from core.particle_numpy import ParticleSystemNumpy  # noqa: E402
+from .particle_numpy import ParticleSystemNumpy  # noqa: E402
 
 
 class NumbaParticleSystem(ParticleSystemNumpy):

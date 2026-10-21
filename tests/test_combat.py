@@ -8,8 +8,8 @@ CombatEffectsManager 战斗特效系统单元测试
 import math
 import random
 import pytest
-from core.particle import Particle
-from systems.combat_effects import CombatEffectsManager, create_combat_manager
+from particlefx.core.particle import Particle
+from particlefx.systems.combat_effects import CombatEffectsManager, create_combat_manager
 
 
 class TestInit:

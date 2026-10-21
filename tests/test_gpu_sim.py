@@ -9,7 +9,7 @@ import pathlib
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SRC = (ROOT / "renderers" / "particle_sim_gpu.py").read_text(encoding="utf-8")
+SRC = (ROOT / "particlefx" / "renderers" / "particle_sim_gpu.py").read_text(encoding="utf-8")
 
 
 class TestSourceStructure:
@@ -33,7 +33,7 @@ class TestSourceStructure:
         compile(SRC, "renderers/particle_sim_gpu.py", "exec")
 
     def test_fallback_flag(self):
-        import renderers.particle_sim_gpu as psg
+        import particlefx.renderers.particle_sim_gpu as psg
         if not psg.HAS_MODERNGL:
             assert psg.moderngl is None
             with pytest.raises(ImportError) as e:
@@ -46,7 +46,7 @@ class TestSourceStructure:
 class TestGPUParticleSimulator:
     def _make(self, **kw):
         import moderngl
-        from renderers.particle_sim_gpu import GPUParticleSimulator
+        from particlefx.renderers.particle_sim_gpu import GPUParticleSimulator
         ctx = moderngl.create_context(standalone=True, require=430)
         return GPUParticleSimulator(ctx=ctx, **kw)
 

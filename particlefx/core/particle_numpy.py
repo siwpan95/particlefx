@@ -10,7 +10,7 @@ ParticleSystemNumpy — NumPy 向量化粒子系统（P4）
 - 不支持复杂事件/碰撞/拖尾（轻量高性能场景使用）
 
 使用示例：
-    from core.particle_numpy import ParticleSystemNumpy, NumpyForceGravity
+    from .particle_numpy import ParticleSystemNumpy, NumpyForceGravity
 
     sys_np = ParticleSystemNumpy(max_particles=5000)
     sys_np.add_force(NumpyForceGravity(strength=3.0))
@@ -28,8 +28,10 @@ ParticleSystemNumpy — NumPy 向量化粒子系统（P4）
 import math
 import random
 import numpy as np
-from typing import List, Tuple, Optional
-from PIL import Image, ImageDraw
+from typing import TYPE_CHECKING, List, Tuple, Optional
+
+if TYPE_CHECKING:  # pragma: no cover - 仅供类型检查，运行时不导入 Pillow
+    from PIL import Image
 
 
 # ================================================================
@@ -339,20 +341,23 @@ class ParticleSystemNumpy:
 
     def render_to_image(self,
                         width: int, height: int,
-                        background: Optional[Image.Image] = None,
+                        background: Optional["Image.Image"] = None,
                         blend_mode: str = 'additive',
-                        ) -> Image.Image:
+                        ) -> "Image.Image":
         """
         将粒子渲染到图像（高性能向量化路径）。
-        
+
         Args:
             width, height : 画布尺寸
             background    : 背景图（RGB），None = 黑色
             blend_mode    : 'normal' | 'additive' | 'screen'
-        
+
         Returns:
             RGB Image
         """
+        # Pillow 是可选依赖（pip install particlefx[pil]），按需延迟导入
+        from PIL import Image, ImageDraw
+
         if background is None:
             canvas = Image.new('RGB', (width, height), (0, 0, 0))
         else:
@@ -449,7 +454,7 @@ class ParticleSystemNumpy:
         注意：此路径有 Python 循环开销，仅作为兼容接口使用。
         对于性能敏感场景，优先使用 render_to_image()。
         """
-        from core.particle import Particle
+        from .particle import Particle
         alive = self.alive
         if not np.any(alive):
             renderer.render([])

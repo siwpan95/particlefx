@@ -12,8 +12,8 @@ import pytest
 import numpy as np
 from PIL import Image, ImageDraw
 
-from core.particle import Particle, Renderer
-from renderers.pil_renderer import (
+from particlefx.core.particle import Particle, Renderer
+from particlefx.renderers.pil_renderer import (
     PILRenderer,
     LayeredPILRenderer,
     post_process_bloom,

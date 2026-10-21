@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "particlefx"
+version = "1.0.0"
+description = "纯 Python + NumPy 粒子系统库 — 多渲染器（pygame/PIL/ModernGL）+ 效果工厂 + Taichi 流体后端 + GPU 模拟"
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.10"
+authors = [
+    {name = "全哥"}
+]
+keywords = ["particle", "particle-system", "effects", "vfx", "pygame", "numpy", "rendering", "gpu"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Games/Entertainment",
+]
+
+# ---- 核心依赖：仅 numpy（纯 Python 实现的向量基座）----
+dependencies = [
+    "numpy>=1.24",
+]
+
+# ---- 可选依赖组：按渲染后端 / 加速后端分装 ----
+[project.optional-dependencies]
+# pygame 渲染器 + 交互窗口
+pygame = [
+    "pygame-ce>=2.4",
+]
+# PIL 渲染器：离屏渲染 / GIF / 视频帧 / 分层
+pil = [
+    "Pillow>=10.0",
+]
+# Numba JIT 更新内核（CPU 加速）
+numba = [
+    "numba>=0.60",
+]
+# Taichi WCSPH 流体后端
+taichi = [
+    "taichi>=1.7",
+]
+# ModernGL GPU 渲染器 + Compute Shader 全 GPU 模拟
+gpu = [
+    "moderngl>=5.10",
+    "pygame-ce>=2.4",
+]
+# 效果配方 JSON Schema 校验
+schema = [
+    "jsonschema>=4.0",
+]
+# 一键安装所有可选依赖
+all = [
+    "pygame-ce>=2.4",
+    "Pillow>=10.0",
+    "numba>=0.60",
+    "taichi>=1.7",
+    "moderngl>=5.10",
+    "jsonschema>=4.0",
+]
+
+[project.urls]
+Homepage = "https://gitee.com/siwpan/particlefx"
+Repository = "https://gitee.com/siwpan/particlefx"
+Issues = "https://gitee.com/siwpan/particlefx/issues"
+Changelog = "https://gitee.com/siwpan/particlefx/blob/master/CHANGELOG.md"
+
+[tool.setuptools]
+# 关闭「自动收录被 git 跟踪的包内文件」：pyproject 模式下该开关默认为 True，
+# 会绕过 exclude-package-data 把包目录下所有已跟踪文件打进去。
+# 本包只需 .py 源码 + components/*.json 配方数据（后者在下方显式声明）。
+include-package-data = false
+
+[tool.setuptools.packages.find]
+# 只收录 particlefx 命名空间包，避免把仓库根的 examples/tests/docs/shaders 误当包。
+include = ["particlefx*"]
+# 关闭 namespace 自动发现：仓库根存在无 __init__.py 的目录（examples/tests），
+# 默认的 namespace 扫描会把它们收进来。
+namespaces = false
+
+[tool.setuptools.package-data]
+# 效果配方数据是效果工厂运行必需的一部分，关掉 include-package-data 后需显式声明。
+particlefx = [
+    "components/*.json",
+]

@@ -8,8 +8,8 @@ WeatherSystem 天气系统单元测试
 import math
 import random
 import pytest
-from core.particle import Particle, ForceField
-from systems.weather_system import WeatherSystem, create_weather
+from particlefx.core.particle import Particle, ForceField
+from particlefx.systems.weather_system import WeatherSystem, create_weather
 
 
 class TestWeatherInit:

@@ -13,7 +13,7 @@ Bloom 后处理：Ping-Pong FBO + 分离式高斯模糊（所有路径共享）
 
 用法：
   import pygame
-  from renderers.fluid_renderer_moderngl import UnifiedGPURenderer
+  from .fluid_renderer_moderngl import UnifiedGPURenderer
   
   screen = pygame.display.set_mode((800, 600), pygame.OPENGL | pygame.DOUBLEBUF)
   renderer = UnifiedGPURenderer(screen, mode='particles', max_particles=10000)

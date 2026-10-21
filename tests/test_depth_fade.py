@@ -14,8 +14,8 @@ import pathlib
 import pytest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-GPUFILE = ROOT / "renderers" / "particle_renderer_moderngl.py"
-UNIFIEDFILE = ROOT / "renderers" / "fluid_renderer_modernGL.py"
+GPUFILE = ROOT / "particlefx" / "renderers" / "particle_renderer_moderngl.py"
+UNIFIEDFILE = ROOT / "particlefx" / "renderers" / "fluid_renderer_modernGL.py"
 
 
 def _src(path):
@@ -62,13 +62,13 @@ class TestDepthFadeShaders:
                     reason="moderngl 未安装")
 class TestDepthFadeWithModernGL:
     def test_gpu_renderer_signature(self):
-        from renderers.particle_renderer_moderngl import GPUParticleRenderer
+        from particlefx.renderers.particle_renderer_moderngl import GPUParticleRenderer
         sig = inspect.signature(GPUParticleRenderer.__init__)
         assert "enable_depth_fade" in sig.parameters
         assert "depth_fade_range" in sig.parameters
 
     def test_unified_renderer_signature(self):
-        from renderers.fluid_renderer_modernGL import UnifiedGPURenderer
+        from particlefx.renderers.fluid_renderer_modernGL import UnifiedGPURenderer
         sig = inspect.signature(UnifiedGPURenderer.__init__)
         assert "enable_depth_fade" in sig.parameters
         assert "depth_fade_range" in sig.parameters

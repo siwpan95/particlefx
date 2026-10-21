@@ -17,7 +17,7 @@ import pygame
 import math
 import numpy as np
 from collections import deque
-from core.particle import Particle, Renderer
+from ..core.particle import Particle, Renderer
 
 # ================================================================
 #  Bloom 后处理工具函数

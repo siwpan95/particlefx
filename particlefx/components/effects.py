@@ -17,7 +17,7 @@
 - 纹理动画：精灵表帧动画
 
 使用示例：
-    from components.effects import create_explosion, create_vortex_effect
+    from .effects import create_explosion, create_vortex_effect
 
     boom = create_explosion(x=400, y=300)
     tornado = create_vortex_effect(x=400, y=300)
@@ -31,35 +31,19 @@
 import random
 import math
 
-try:
-    from core.particle import (
-        Particle, ParticleSystem, Emitter, ForceField,
-        FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
-        EXPLOSION_SIZE_CURVE, SPARK_SIZE_CURVE,
-        gradient_to_curve, size_curve_fadeout, size_curve_pulse,
-        velocity_curve_accelerate, velocity_curve_decelerate,
-        NoiseField,
-        # v3.0 新增导入
-        EmitterShape, CollisionBox, CollisionBoundary,
-        LightSource, BlinnPhongParams,
-        create_point_light, create_directional_light, create_ambient_light,
-        create_vortex, create_turbulence, create_magnet,
-    )
-except ImportError:
-    import os, sys
-    sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    from core.particle import (
-        Particle, ParticleSystem, Emitter, ForceField,
-        FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
-        EXPLOSION_SIZE_CURVE, SPARK_SIZE_CURVE,
-        gradient_to_curve, size_curve_fadeout, size_curve_pulse,
-        velocity_curve_accelerate, velocity_curve_decelerate,
-        NoiseField,
-        EmitterShape, CollisionBox, CollisionBoundary,
-        LightSource, BlinnPhongParams,
-        create_point_light, create_directional_light, create_ambient_light,
-        create_vortex, create_turbulence, create_magnet,
-    )
+from ..core.particle import (
+    Particle, ParticleSystem, Emitter, ForceField,
+    FIRE_COLOR_CURVE, SMOKE_COLOR_CURVE, MAGIC_COLOR_CURVE,
+    EXPLOSION_SIZE_CURVE, SPARK_SIZE_CURVE,
+    gradient_to_curve, size_curve_fadeout, size_curve_pulse,
+    velocity_curve_accelerate, velocity_curve_decelerate,
+    NoiseField,
+    # v3.0 新增导入
+    EmitterShape, CollisionBox, CollisionBoundary,
+    LightSource, BlinnPhongParams,
+    create_point_light, create_directional_light, create_ambient_light,
+    create_vortex, create_turbulence, create_magnet,
+)
 
 
 # ============================================================
@@ -891,7 +875,7 @@ class FluidEffectSystem:
                  gravity: float = 3.0,
                  turbulence: float = 2.0,
                  ):
-        from core.particle_numpy import (
+        from ..core.particle_numpy import (
             ParticleSystemNumpy, NumpyForceGravity,
             NumpyForceTurbulence, NumpyForceDrag
         )

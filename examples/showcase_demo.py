@@ -29,10 +29,10 @@ import pygame
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from core.particle import Particle, ParticleSystem
-from renderers.pygame_renderer import PygameRenderer
-from components.effects_factory import EffectsFactory, create_effect
-from components.effects import (
+from particlefx.core.particle import Particle, ParticleSystem
+from particlefx.renderers.pygame_renderer import PygameRenderer
+from particlefx.components.effects_factory import EffectsFactory, create_effect
+from particlefx.components.effects import (
     create_explosion, create_fire, create_magic_circle,
     create_sparkle, create_smoke, create_fountain,
     create_vortex_effect, create_collision_sparks,
