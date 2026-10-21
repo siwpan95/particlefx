@@ -4,7 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "particlefx"
-version = "1.0.0"
+# 版本号唯一真源在 particlefx/__init__.py 的 __version__（见下方 dynamic 段）
+dynamic = ["version"]
 description = "纯 Python + NumPy 粒子系统库 — 多渲染器（pygame/PIL/ModernGL）+ 效果工厂 + Taichi 流体后端 + GPU 模拟"
 readme = "README.md"
 license = {file = "LICENSE"}
@@ -94,3 +95,8 @@ namespaces = false
 particlefx = [
     "components/*.json",
 ]
+
+# 版本号单一真源：包根 __init__.py 的 __version__。
+# setuptools 走静态 AST 解析（不导入包），故构建隔离环境无需装 numpy 也能取到版本。
+[tool.setuptools.dynamic]
+version = {attr = "particlefx.__version__"}
