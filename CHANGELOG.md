@@ -4,6 +4,16 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.1] - 2026-11-13
+
+### Changed
+
+- **打包元数据改用 PEP 639 许可表达式**：`project.license` 由已废弃的 TOML 表
+  `{file = "LICENSE"}` 改为 SPDX 字符串 `"MIT"`，并用 `project.license-files = ["LICENSE"]`
+  声明许可证文件；`build-system.requires` 提升至 `setuptools>=77.0`（PEP 639 支持）。
+  目的：消除 setuptools 的 `project.license` 弃用告警（原定 2027-02 前必须迁移）。
+  功能无变化。
+
 ## [1.1.0] - 2026-11-13
 
 ### Added

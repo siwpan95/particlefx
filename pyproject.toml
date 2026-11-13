@@ -1,5 +1,6 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+# >=77 才有 PEP 639 支持（license 用 SPDX 字符串 + license-files）
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,7 +9,9 @@ name = "particlefx"
 dynamic = ["version"]
 description = "纯 Python + NumPy 粒子系统库 — 多渲染器（pygame/PIL/ModernGL）+ 效果工厂 + Taichi 流体后端 + GPU 模拟"
 readme = "README.md"
-license = {file = "LICENSE"}
+# PEP 639：SPDX 表达式 + 许可证文件清单（替代已废弃的 TOML 表写法）
+license = "MIT"
+license-files = ["LICENSE"]
 requires-python = ">=3.10"
 authors = [
     {name = "全哥"}
