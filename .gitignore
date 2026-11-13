@@ -20,3 +20,6 @@ release/
 # Python 打包产物（2026-10-21，PyPI 发布用）
 dist/
 build/
+
+# WorkBuddy 项目数据（非缓存，误提交会泄露本地工作区状态）
+.workbuddy/

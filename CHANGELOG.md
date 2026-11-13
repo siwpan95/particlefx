@@ -4,6 +4,24 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [1.1.0] - 2026-11-13
+
+### Added
+
+- **粒子光场系统 `LightFieldSystem`**（`particlefx/systems/light_field.py`）：把
+  `examples/web/light_field.html` 那套零依赖 Canvas 交互模型移植为 particlefx 原生
+  Python 系统，二者共享同一套交互语义与配色常量
+  （移动=吸引 / 按住=排斥 / 点击=冲击波 / `?seed=` 可复现 /
+  Aurora·Ember·Toxic 三套配色平滑过渡）。物理为逐粒子纯 Python 积分（复用 `Particle`），
+  渲染交给库内渲染器（`PygameRenderer(additive+bloom)` 实时 / `LayeredPILRenderer` 离线导出 PNG）。
+  - `create_light_field(...)` 快捷构造。
+  - `selfcheck.py::check_light_field()` 无头校验：流场运动 / seed 可复现 / 吸引排斥 / 冲击波 / 换色与 `set_count`。
+- **Web 参考实现收录**：`examples/web/light_field.html`（零依赖 Canvas2D，双击即开），
+  与 Python 端为「同源双实现」，文件头已注明 provenance（共享交互语义与配色常量）。
+- **光场交互 Demo**：`examples/light_field_demo.py`（pygame 实时），键位对齐 Web 版
+  （移动=吸引 / 按住=排斥 / 点击=冲击波 / 空格=换色 / R=重置 / P=暂停 / S=存 PNG / `[` `]`=增减粒子）。
+- **API 文档**：`docs/api.md` 新增 `LightFieldSystem` 段落（构造 / 交互 API 表 / 可复现性与配色说明）。
+
 ## [1.0.0] - 2026-10-21
 
 ### Added

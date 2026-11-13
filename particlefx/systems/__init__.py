@@ -2,6 +2,7 @@
 from .fireworks_system import FireworksSystem, create_fireworks
 from .weather_system import WeatherSystem, create_weather
 from .combat_effects import CombatEffectsManager, create_combat_manager
+from .light_field import LightFieldSystem, create_light_field
 
 __all__ = [
     'FireworksSystem',
@@ -10,4 +11,6 @@ __all__ = [
     'create_weather',
     'CombatEffectsManager',
     'create_combat_manager',
+    'LightFieldSystem',
+    'create_light_field',
 ]

@@ -40,8 +40,9 @@ from .core import (
     create_attractor,
     ParticleSystemNumpy,
 )
+from .systems import LightFieldSystem, create_light_field
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 
 __all__ = [
     '__version__',
@@ -62,6 +63,9 @@ __all__ = [
     'SpatialHashGrid',
     'create_attractor',
     'ParticleSystemNumpy',
+    # 系统
+    'LightFieldSystem',
+    'create_light_field',
 ]
 
 

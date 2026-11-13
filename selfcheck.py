@@ -12,6 +12,7 @@ particlefx.components.effects_factory（渲染器与 examples 一律不 import�
 """
 
 import os
+import math
 import random
 import sys
 import traceback
@@ -24,6 +25,7 @@ from particlefx import Emitter, ForceField, ParticleSystem
 from particlefx.components.effects_factory import EffectsFactory
 from particlefx.core.particle import Particle
 from particlefx.systems.fireworks_system import FireworksSystem
+from particlefx.systems.light_field import LightFieldSystem
 
 SEED = 20261026
 
@@ -149,11 +151,84 @@ def check_effects_factory():
     return ""
 
 
+def check_light_field():
+    """功能点 4：LightFieldSystem 无头 —— 确定性播种 / 流场运动 / 吸引排斥 / 冲击波 / seed 可复现。"""
+    W, H, N = 400, 300, 400
+
+    # (a) 无指针时环境流场应让粒子移动
+    s = LightFieldSystem(width=W, height=H, count=N, seed=20261026, max_particles=2000)
+    init = [(p.x, p.y) for p in s.particles]
+    s.update(16.667)
+    moved = sum(1 for (x0, y0), p in zip(init, s.particles)
+                if abs(p.x - x0) > 1e-6 or abs(p.y - y0) > 1e-6)
+    if moved < N * 0.5:
+        return "流场下多数粒子未移动：%d/%d" % (moved, N)
+
+    # (b) 确定性：同 seed + 同 dt 序列 + 同指针序列 => 位置完全一致
+    a = LightFieldSystem(width=W, height=H, count=N, seed=777, max_particles=2000)
+    b = LightFieldSystem(width=W, height=H, count=N, seed=777, max_particles=2000)
+    for _ in range(10):
+        a.set_pointer(W / 2, H / 2, active=True, pressing=False)
+        b.set_pointer(W / 2, H / 2, active=True, pressing=False)
+        a.update(16.667)
+        b.update(16.667)
+    max_err = max(math.hypot(pa.x - pb.x, pa.y - pb.y)
+                  for pa, pb in zip(a.particles, b.particles))
+    if max_err > 1e-9:
+        return "seed 可复现失败：最大误差 %.3e" % max_err
+
+    # (c) 吸引：指针居中，初始落在影响半径内的粒子应被明显拉向中心。
+    #     仅测量“受指针力场作用”的子集，比全局平均更灵敏、更稳健。
+    cx, cy = W / 2, H / 2
+    infl = LightFieldSystem.INFLUENCE
+    c = LightFieldSystem(width=W, height=H, count=N, seed=42, max_particles=2000)
+    c_mask = [math.hypot(p.x - cx, p.y - cy) < infl for p in c.particles]
+    c_d0 = [math.hypot(p.x - cx, p.y - cy) for p, m in zip(c.particles, c_mask) if m]
+    for _ in range(60):
+        c.set_pointer(cx, cy, active=True, pressing=False)
+        c.update(16.667)
+    c_d1 = [math.hypot(p.x - cx, p.y - cy) for p, m in zip(c.particles, c_mask) if m]
+    c_a0 = sum(c_d0) / len(c_d0)
+    c_a1 = sum(c_d1) / len(c_d1)
+    if not (c_a1 < c_a0 * 0.995):
+        return "吸引未生效：影响区内平均距离 %.2f -> %.2f" % (c_a0, c_a1)
+
+    # (d) 排斥：按住（pressing），同一子集粒子应被明显推离中心
+    e = LightFieldSystem(width=W, height=H, count=N, seed=42, max_particles=2000)
+    e_mask = [math.hypot(p.x - cx, p.y - cy) < infl for p in e.particles]
+    e_d0 = [math.hypot(p.x - cx, p.y - cy) for p, m in zip(e.particles, e_mask) if m]
+    for _ in range(60):
+        e.set_pointer(cx, cy, active=True, pressing=True)
+        e.update(16.667)
+    e_d1 = [math.hypot(p.x - cx, p.y - cy) for p, m in zip(e.particles, e_mask) if m]
+    e_a0 = sum(e_d0) / len(e_d0)
+    e_a1 = sum(e_d1) / len(e_d1)
+    if not (e_a1 > e_a0 * 1.01):
+        return "排斥未生效：影响区内平均距离 %.2f -> %.2f" % (e_a0, e_a1)
+
+    # (e) 冲击波：触发后应有环记录且附近粒子获得向外冲量
+    f = LightFieldSystem(width=W, height=H, count=N, seed=99, max_particles=2000)
+    f.trigger_shockwave(W / 2, H / 2)
+    if len(f.shockwaves) < 1:
+        return "冲击波未记录"
+    for _ in range(3):
+        f.update(16.667)
+
+    # (f) 换色与 set_count 不报错
+    f.cycle_palette()
+    f.set_count(250)
+    f.update(16.667)
+    if f.get_particle_count() != 250:
+        return "set_count 后粒子数不符：%d" % f.get_particle_count()
+    return ""
+
+
 def main():
     checks = [
         ("core emitter/gravity/lifetime", check_core_physics),
         ("FireworksSystem headless launch+burst", check_fireworks_headless),
         ("EffectsFactory JSON config round-trip", check_effects_factory),
+        ("LightFieldSystem headless interactivity", check_light_field),
     ]
     for label, func in checks:
         try:

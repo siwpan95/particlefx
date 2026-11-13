@@ -63,8 +63,11 @@ particlefx/
 │   └── systems/
 │       ├── fireworks_system.py   # 烟花（14 样式 × 10 调色板）
 │       ├── weather_system.py     # 天气（6 种）
-│       └── combat_effects.py     # 战斗特效（攻击/技能/飘字/死亡）
+│       ├── combat_effects.py     # 战斗特效（攻击/技能/飘字/死亡）
+│       └── light_field.py        # 粒子光场（与 examples/web/light_field.html 同源双实现）
 ├── examples/                 # 交互 Demo + 视频生成器 + pygbag Web 入口
+│   ├── light_field_demo.py   # 光场 Python 交互 Demo（pygame）
+│   └── web/light_field.html  # 光场零依赖 Web 参考实现（Canvas2D，双击即开）
 ├── docs/                     # api.md / effects.md / enhancements.md
 └── tests/                    # pytest 全套测试
 ```
@@ -194,6 +197,34 @@ ps.render(renderer)
 cd examples/
 python fireworks.py
 ```
+
+### 粒子光场（Light Field）— 同源双实现
+
+把一套交互式粒子光场同时落地为 **Web 端（零依赖 Canvas2D）** 与 **Python 端（particlefx 原生系统）** 两份实现，二者共享同一套交互语义与配色常量：
+
+- 鼠标移动 = 吸引，按住 = 排斥，点击 = 冲击波
+- `?seed=` 可复现（确定性随机数 `mulberry32` + 按粒子序号派生 seed）
+- Aurora / Ember / Toxic 三套配色，速度映射冷暖色相，平滑过渡
+
+```bash
+# Python 端（pygame 实时交互；移动=吸引 / 按住=排斥 / 空格=换色 / R=重置 / S=存 PNG / [ ]=增减粒子）
+cd examples/
+python light_field_demo.py --seed 42
+```
+
+Web 端零依赖，直接用浏览器打开即可（无需服务器）：
+
+```bash
+# 双击打开，或在仓库根目录起一个静态服务：
+python -m http.server 8000   # 然后访问 http://localhost:8000/examples/web/light_field.html?seed=42
+```
+
+| 端 | 文件 | 渲染 | 拖尾/发光 |
+|---|------|------|-----------|
+| Web | `examples/web/light_field.html` | Canvas2D 半透明覆盖 | 帧间半透明覆盖 |
+| Python | `particlefx/systems/light_field.py` -> `LightFieldSystem` | `PygameRenderer(additive+bloom)` / `LayeredPILRenderer` | additive + Bloom / smooth_trail |
+
+物理为逐粒子纯 Python 积分（复用 `Particle`），与 Web 版逐帧对齐；see `selfcheck.py` 的 `check_light_field()` 做无头校验（流场 / 确定性 / 吸引排斥 / 冲击波 / 换色）。
 
 ### 其他效果（待创建）
 

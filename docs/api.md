@@ -457,6 +457,46 @@ while running:
     mgr.render(renderer)
 ```
 
+### LightFieldSystem — 交互式粒子光场（v1.1.0 新增）
+
+把零依赖 Canvas 光场交互模型移植为 particlefx 原生 Python 系统，与
+`examples/web/light_field.html` 共享同一套交互语义与配色常量：
+
+```python
+from particlefx import LightFieldSystem, create_light_field
+
+# 快捷构造
+lf = create_light_field(width=800, height=600, count=1500, seed=42, palette_index=0)
+
+# 或显式构造
+lf = LightFieldSystem(width=800, height=600, count=1500, seed=42)
+
+while running:
+    # 指针交互：移动=吸引 / 按住=排斥 / 点击=冲击波
+    lf.set_pointer(mx, my, active=True, pressing=mouse_down)
+    lf.update(16.667)                 # dt 为毫秒级帧时长（内部按 16.667 归一）
+    renderer.render(lf.particles)      # 交给任意渲染器（pygame / PIL）
+```
+
+**交互 API**
+
+| 方法 | 说明 |
+|------|------|
+| `set_pointer(x, y, active=True, pressing=False)` | 设置指针位置与状态：移动=吸引，按住=排斥 |
+| `trigger_shockwave(x=None, y=None)` | 在指定位置（默认当前指针）触发冲击波环 + 向外冲量 |
+| `cycle_palette()` | 切换到下一套配色（Aurora→Ember→Toxic，平滑过渡） |
+| `reset(seed=None)` | 用 seed 重新确定性播种 |
+| `set_count(n)` | 增减粒子数（保持现有粒子 seed 语义） |
+| `update(dt)` | 推进一帧物理 |
+| `render(renderer)` | 交给任意渲染器绘制 |
+| `save_image(path, background=None, bloom=True)` | 离线导出当前帧为 PNG（需 Pillow，`pip install "particlefx[pil]"`） |
+
+**可复现性**：相同 `seed` + 相同 `dt` 序列 + 相同指针序列 ⇒ 逐粒子位置完全一致
+（确定性 `mulberry32` + 按粒子序号派生 seed）。
+
+**配色**：三套（`LIGHT_FIELD_PALETTES`）随粒子速度在冷/暖色相间连续渐变；
+`current_palette_name()` / `current_bg()` 可读当前配色名与背景色。
+
 ---
 
 ## v5.0 新增 API 速查
