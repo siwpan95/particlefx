@@ -19,6 +19,13 @@ from .effects_factory import (
     create_effect,
     list_all_effects,
 )
+from .preset import (
+    system_to_recipe,
+    recipe_to_system,
+    save_preset,
+    load_preset,
+    export_effect_recipe,
+)
 
 __all__ = [
     'create_explosion',
@@ -38,4 +45,9 @@ __all__ = [
     'get_factory',
     'create_effect',
     'list_all_effects',
+    'system_to_recipe',
+    'recipe_to_system',
+    'save_preset',
+    'load_preset',
+    'export_effect_recipe',
 ]

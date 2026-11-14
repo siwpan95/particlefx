@@ -14,10 +14,10 @@ Compute Shader 全 GPU 模拟。
     ps.add_force_field(ForceField(field_type='gravity', strength=100.0))
 
 子包：
-    particlefx.core        核心粒子类 / NumPy 向量化 / Numba JIT / Taichi SPH / 空间哈希
+    particlefx.core        核心粒子类 / NumPy 向量化 / Numba JIT / Taichi SPH / 空间哈希 / 确定性 PRNG
     particlefx.renderers   pygame / PIL / ModernGL / 流体 / 后处理 / GPU 模拟
-    particlefx.components  效果工厂与声明式配方（JSON）
-    particlefx.systems     烟花 / 天气 / 战斗特效
+    particlefx.components  效果工厂与声明式配方（JSON）/ 场景配方与种子持久化
+    particlefx.systems     烟花 / 天气 / 战斗 / 魔法特效 / 粒子光场
 
 许可证：MIT
 """
@@ -43,9 +43,12 @@ from .core import (
     hash_seed,
     derive_seed,
 )
-from .systems import LightFieldSystem, create_light_field
+from .systems import (
+    LightFieldSystem, create_light_field,
+    MagicEffectsManager, create_magic,
+)
 
-__version__ = "1.1.1"
+__version__ = "1.2.0"
 
 __all__ = [
     '__version__',
@@ -72,6 +75,8 @@ __all__ = [
     # 系统
     'LightFieldSystem',
     'create_light_field',
+    'MagicEffectsManager',
+    'create_magic',
 ]
 
 

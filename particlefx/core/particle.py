@@ -593,30 +593,43 @@ class ForceField:
                  # --- 磁场参数 ---
                  magnet_polarity: float = 1.0,   # 正=吸引, 负=排斥
                  magnet_range: float = 200.0,
+                 # --- v1.2：可复现模拟随机种子 ---
+                 seed: Optional[int] = None,
                  ):
         self.field_type = field_type
         self.x = x
         self.y = y
         self.strength = strength
-        
+
         # 噪声参数
         self.noise_scale = noise_scale
         self.noise_strength = noise_strength
         self.noise_octaves = noise_octaves
-        
+
         # 漩涡参数
         self.vortex_clockwise = vortex_clockwise
         self.vortex_falloff = vortex_falloff
-        
+
         # 湍流参数
         self.turb_scale = turb_scale
         self.turb_strength = turb_strength
-        
+
         # 磁场参数
         self.magnet_polarity = magnet_polarity
         self.magnet_range = magnet_range
-        
-        self._noise_time_offset = random.uniform(0, 1000)
+
+        # v1.2：可复现模拟。seed 给定 -> 确定性派发噪声时间偏移；
+        # 否则回退全局 random（与旧版逐位一致）。
+        self.seed = seed
+        self._system_derived = False
+        self._salt = 0
+        self._noise_time_offset = self._noise_offset_from_seed(seed)
+
+    def _noise_offset_from_seed(self, seed):
+        """由种子确定性派生噪声时间偏移；seed=None 回退全局 random（旧行为）。"""
+        if seed is None:
+            return random.uniform(0, 1000)
+        return random.Random(seed).uniform(0, 1000)
 
     def get_force(self, particle_or_x, time_or_y: float = 0.0,
                   time: float = 0.0) -> Tuple[float, float]:
@@ -835,7 +848,11 @@ class NoiseField:
         self.strength = strength
         self.scale = scale
         self.octaves = max(1, octaves)
+        # v1.2：区分「用户显式种子」与「未播种时的随机默认」，使系统级种子化仅覆盖
+        # 未显式指定 seed 的噪声场（保留用户显式 seed）。未指定时回退全局 random（旧行为）。
+        self._explicit_seed = seed is not None
         self.seed = seed if seed is not None else random.randint(0, 100000)
+        self._system_derived = False
         self._time = 0.0
 
     def update(self, dt: float):
@@ -1390,9 +1407,23 @@ class ParticleSystem:
         self.emitters.append(emitter)
 
     def add_force_field(self, force_field: ForceField):
+        # v1.2：系统已播种且力场自身未带种子 -> 由其添加序号派发一条确定性
+        # 子流（噪声时间偏移），使力场噪声/湍流场在「系统 seed + 添加顺序」下可复现。
+        if self._rng is not None and force_field.seed is None:
+            force_field._salt = 1000 + len(self.force_fields)
+            d = self._derive_seed(force_field._salt)
+            force_field.seed = d
+            force_field._system_derived = True
+            force_field._noise_time_offset = force_field._noise_offset_from_seed(d)
         self.force_fields.append(force_field)
 
     def add_noise_field(self, noise_field: NoiseField):
+        # v1.2：系统已播种且噪声场自身未显式带种子 -> 由其添加序号派发确定性子流。
+        # NoiseField.get_force 直接用 self.seed 作为相位，故只需赋值即可复现。
+        if self._rng is not None and not getattr(noise_field, '_explicit_seed', False):
+            noise_field._salt = 2000 + len(self.noise_fields)
+            noise_field.seed = self._derive_seed(noise_field._salt)
+            noise_field._system_derived = True
         self.noise_fields.append(noise_field)
 
     def add_collision_box(self, box: CollisionBox):
@@ -1725,6 +1756,15 @@ class ParticleSystem:
         for idx, em in enumerate(self.emitters):
             if getattr(em, '_system_derived', False):
                 em._rng = random.Random(self._derive_seed(idx)) if self._rng is not None else None
+        # v1.2：一并重派由本系统派生的力场 / 噪声场种子。
+        for ff in self.force_fields:
+            if getattr(ff, '_system_derived', False):
+                d = self._derive_seed(ff._salt)
+                ff.seed = d
+                ff._noise_time_offset = ff._noise_offset_from_seed(d)
+        for nf in self.noise_fields:
+            if getattr(nf, '_system_derived', False):
+                nf.seed = self._derive_seed(nf._salt)
         return self
 
     def save_rng_state(self):

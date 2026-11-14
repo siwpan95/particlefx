@@ -172,7 +172,10 @@ class EffectsFactory:
         Args:
             name    : 效果名称（如 'nebula_burst'）
             **params: 运行时参数（x, y, width, height, direction, intensity）
-        
+                      以及可选的 ``seed`` / ``fixed_dt`` / ``max_substeps``（v1.2：
+                      给定 seed -> 整场效果可复现；fixed_dt 开启固定步长子步进）。
+                      这些参数会覆盖效果配置里同名的默认值。
+
         Returns:
             ParticleSystem 实例，或 None
         """
@@ -187,19 +190,31 @@ class EffectsFactory:
         palette_name = cfg.get('palette')
         palette = self._resolve_palette(palette_name)
 
-        # 创建系统
+        # 创建系统：优先用本次调用参数，其次用效果配置默认值（v1.2 可复现支持）
         max_particles = cfg.get('max_particles', 300)
-        system = ParticleSystem(max_particles=max_particles)
+        seed = params.get('seed', cfg.get('seed'))
+        fixed_dt = params.get('fixed_dt', cfg.get('fixed_dt'))
+        max_substeps = params.get('max_substeps', cfg.get('max_substeps', 100))
+        system = ParticleSystem(
+            max_particles=max_particles,
+            seed=seed,
+            fixed_dt=fixed_dt,
+            max_substeps=max_substeps,
+        )
+
+        # v1.2：构建期随机（speed/life/size 范围、坐标列表、配色抽样）也走种子化随机源，
+        # 使「给定 seed 的声明式配方」可完整复现；seed=None 回退全局 random（旧行为）。
+        build_rng = random.Random(seed) if seed is not None else random
 
         # 创建发射器
         for em_cfg in cfg.get('emitters', []):
-            emitter = self._build_emitter(em_cfg, palette, request_params)
+            emitter = self._build_emitter(em_cfg, palette, request_params, build_rng)
             if emitter:
                 system.add_emitter(emitter)
 
         # 创建力场
         for ff_cfg in cfg.get('force_fields', []):
-            ff = self._build_force_field(ff_cfg, request_params)
+            ff = self._build_force_field(ff_cfg, request_params, build_rng)
             if ff:
                 system.add_force_field(ff)
 
@@ -239,7 +254,7 @@ class EffectsFactory:
                 return palettes[palette_ref]
         return None
 
-    def _resolve_coord(self, value: Any, params: dict, default: float = 0.0) -> float:
+    def _resolve_coord(self, value: Any, params: dict, rng, default: float = 0.0) -> float:
         """解析坐标值，支持变量替换"""
         if isinstance(value, (int, float)):
             return float(value)
@@ -254,7 +269,7 @@ class EffectsFactory:
             except Exception:
                 return default
         if isinstance(value, list):
-            return random.uniform(value[0], value[1])
+            return rng.uniform(value[0], value[1])
         return default
 
     def _resolve_special(self, value: str, params: dict) -> Any:
@@ -276,15 +291,19 @@ class EffectsFactory:
             return (dx, dy)
         return value
 
-    def _build_emitter(self, cfg: dict, palette: list, params: dict) -> Optional[Emitter]:
-        """从 JSON 配置构建 Emitter（映射到 Emitter 的实际 API）"""
-        x = self._resolve_coord(cfg.get('x', 0), params)
-        y = self._resolve_coord(cfg.get('y', 0), params)
+    def _build_emitter(self, cfg: dict, palette: list, params: dict, rng) -> Optional[Emitter]:
+        """从 JSON 配置构建 Emitter（映射到 Emitter 的实际 API）。
+
+        ``rng`` 为构建期随机源（种子化或全局），用于 speed/life/size 范围抽样与配色，
+        保证给定 seed 时声明式配方可复现。
+        """
+        x = self._resolve_coord(cfg.get('x', 0), params, rng)
+        y = self._resolve_coord(cfg.get('y', 0), params, rng)
 
         # 速度/生命/大小（随机从范围取单值，Emitter 不支持 range）
         def _rand(val, default=10.0):
             if isinstance(val, list):
-                return random.uniform(val[0], val[1])
+                return rng.uniform(val[0], val[1])
             return float(val) if val else default
 
         # 方向（角度，弧度）
@@ -334,9 +353,9 @@ class EffectsFactory:
             if ref_palette:
                 emitter.color_over_lifetime = gradient_to_curve(ref_palette)
             elif color_lt == 'fade_out':
-                emitter.color = random.choice(palette) if palette else (255, 255, 255)
+                emitter.color = rng.choice(palette) if palette else (255, 255, 255)
         elif palette:
-            emitter.color = random.choice(palette)
+            emitter.color = rng.choice(palette)
 
         if color_ref and isinstance(color_ref, list):
             emitter.color = tuple(color_ref)
@@ -386,10 +405,10 @@ class EffectsFactory:
             elif shape_cfg == 'edge':
                 # JSON 提供两个端点 (x1,y1)-(x2,y2)，转换为 EmitterShape 的
                 # edge_length + edge_angle 模型（以发射器位置为中心）
-                x1 = self._resolve_coord(cfg.get('shape_x1', 0), params)
-                y1 = self._resolve_coord(cfg.get('shape_y1', 0), params)
-                x2 = self._resolve_coord(cfg.get('shape_x2', 100), params)
-                y2 = self._resolve_coord(cfg.get('shape_y2', 100), params)
+                x1 = self._resolve_coord(cfg.get('shape_x1', 0), params, rng)
+                y1 = self._resolve_coord(cfg.get('shape_y1', 0), params, rng)
+                x2 = self._resolve_coord(cfg.get('shape_x2', 100), params, rng)
+                y2 = self._resolve_coord(cfg.get('shape_y2', 100), params, rng)
                 dx = x2 - x1
                 dy = y2 - y1
                 shape.edge_length = math.sqrt(dx * dx + dy * dy)
@@ -409,12 +428,12 @@ class EffectsFactory:
 
         return emitter
 
-    def _build_force_field(self, cfg: dict, params: dict) -> Optional[ForceField]:
-        """从 JSON 配置构建 ForceField"""
+    def _build_force_field(self, cfg: dict, params: dict, rng) -> Optional[ForceField]:
+        """从 JSON 配置构建 ForceField（rng 用于坐标列表抽样，保证可复现）"""
         ftype = cfg.get('type', 'gravity')
         strength = cfg.get('strength', 10.0)
-        x = self._resolve_coord(cfg.get('x', 0), params)
-        y = self._resolve_coord(cfg.get('y', 0), params)
+        x = self._resolve_coord(cfg.get('x', 0), params, rng)
+        y = self._resolve_coord(cfg.get('y', 0), params, rng)
 
         if ftype == 'gravity':
             ff = ForceField(field_type='gravity', strength=strength)

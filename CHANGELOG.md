@@ -4,29 +4,46 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
-## [Unreleased]
+## [1.2.0] - 2026-11-14
 
 ### Added
 
-- **可复现（确定性）模拟（v1.2）**：`ParticleSystem(seed=...)` 与 `Emitter(seed=...)`
+- **可复现（确定性）模拟**：`ParticleSystem(seed=...)` 与 `Emitter(seed=...)`
   支持种子化随机源；系统级种子按发射器「添加顺序」派发独立确定性子流，使
   「系统 seed + 发射器添加顺序 + 同推进序列」即可逐位复现整场模拟。新增便捷方法
   `reseed()` / `save_rng_state()` / `restore_rng_state()`（回滚 / 快照，依赖
   Python `random.Random` 可序列化状态）。未传 `seed` 时回退全局 `random`，与旧版逐位一致。
-- **固定步长子步进（v1.2）**：`ParticleSystem(fixed_dt=..., max_substeps=...)`
+- **固定步长子步进（数值稳定）**：`ParticleSystem(fixed_dt=..., max_substeps=...)`
   在 `dt > fixed_dt` 时自动把一帧拆成若干固定子步推进（半隐式欧拉稳定性），
   子步数受 `max_substeps` 上限保护（spiral-of-death 防护）。默认 `fixed_dt=None`
   时退化为旧版单步积分，行为逐位一致。
 - **共享确定性随机模块**：新增 `particlefx/core/random.py`（`mulberry32` /
   `hash_seed` / `derive_seed`），`light_field.py` 改为复用，消除与 Web 端的重复实现。
-- 新增 `tests/test_determinism.py` / `tests/test_substep.py` 与 `selfcheck.py` 的
-  `check_determinism()` / `check_substep()` 无头校验。
+- **全系统噪声种子化**：`ForceField` 增加 `seed` 参数（确定性派发噪声 / 湍流时间偏移）；
+  系统播种时为 `ForceField` / `NoiseField` 按添加序号派生确定性子流，`reseed()` 一并重派；
+  用户显式 `seed` 始终保留。至此含噪声场的整场模拟也完全可复现。
+- **魔法效果系统（补齐原「待创建」扩展点）**：新增
+  `particlefx/systems/magic_effects.py` 的 `MagicEffectsManager` / `create_magic(...)`，
+  提供 5 种可种子复现的魔法效果（奥术爆发 / 符文环 / 治愈微光 / 虚空触须 / 魔法飞弹），
+  并导出到 `particlefx.systems` 与包根。（`effects_config.json` 的 `magic` 分类下另有
+  6 个声明式魔法配方，此前已存在。）
+- **场景配方 + seed 持久化与分享**：新增 `particlefx/components/preset.py`
+  （`system_to_recipe` / `recipe_to_system` / `save_preset` / `load_preset` /
+  `export_effect_recipe`）；配方记录「结构 + 参数 + 系统种子」，生命期曲线（关键帧数据）
+  导出 / 重建无损，一份配方 + 一个种子即可完整复现场景。
+- 新增 `tests/test_determinism.py` / `tests/test_substep.py` / `tests/test_magic.py` /
+  `tests/test_preset.py`，以及 `selfcheck.py` 的 5 项 v1.2 无头校验（共 9 项）。
 
 ### Changed
 
 - `EmitterShape.sample_position` 及全部 `_sample_*` 增加可选 `rng` 参数；发射路径
   （形状采样 + 旋转 / 角速度 / 质量）与 LOD 随机门槛改用系统 / 发射器种子化随机源。
 - `ParticleSystem.update()` 内部重构为 `_step()` + 子步进包装；公开 `update()` 对外契约不变。
+- `EffectsFactory.create(..., seed=..., fixed_dt=..., max_substeps=...)`：构建期随机
+  （speed/life/size 范围抽样、坐标列表、配色）也走种子化随机源，使声明式配方带 seed 时
+  可完整复现；`effects_config.schema.json` 增加 `seed` / `fixed_dt` / `max_substeps`
+  可选字段，`seed=None` 时仍回退全局 `random`（旧行为不变）。
+- README 更正过时的「其他效果（待创建）」清单，补充魔法效果与场景配方说明。
 
 ## [1.1.1] - 2026-11-13
 

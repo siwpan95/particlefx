@@ -10,7 +10,10 @@ particlefx.components.effects_factory（渲染器与 examples 一律不 import�
 4. 粒子光场 headless：确定性播种 / 流场运动 / 吸引排斥 / 冲击波 / seed 可复现；
 5. （v1.2）可复现模拟：种子化随机源 —— 同种子可复现 / 不同种子相异 /
    每发射器独立子流 / 发射器级 RNG 回滚；
-6. （v1.2）固定步长子步进：大 dt 拆步逼近细积分 / 默认关闭逐位一致 / spiral 上限。
+6. （v1.2）固定步长子步进：大 dt 拆步逼近细积分 / 默认关闭逐位一致 / spiral 上限；
+7. （v1.2）力场 / 噪声场内部噪声种子化：确定性派发 / 显式种子保留 / reseed 重派；
+8. （v1.2）MagicEffectsManager：5 种魔法效果 headless / 生命周期 / 种子可复现；
+9. （v1.2）场景配方与种子持久化：导出 -> 重建 / 文件往返 / 工厂带 seed 可复现。
 
 运行：python selfcheck.py
 """
@@ -343,6 +346,182 @@ def check_substep():
     return ""
 
 
+def check_field_seeding():
+    """功能点 7（v1.2）：力场 / 噪声场内部噪声种子化 ——
+    系统 seed 派生确定性子流 / 显式种子保留 / reseed 重派 / 整场可复现。
+    """
+    from particlefx import NoiseField
+
+    def _snap(ps):
+        return [(round(p.x, 9), round(p.y, 9), round(p.vx, 9), round(p.vy, 9))
+                for p in ps.particles]
+
+    # (a) 含噪声场 / 湍流场 / 独立噪声场的系统，同 seed 逐位可复现、不同 seed 相异
+    def run(seed):
+        ps = ParticleSystem(max_particles=2000, seed=seed)
+        ps.add_emitter(Emitter(x=400, y=300, rate=80.0, speed=120.0,
+                               spread=0.8, life=2.0, size=2.0))
+        ps.add_force_field(ForceField(field_type='noise', noise_strength=3.0,
+                                      noise_scale=40.0))
+        ps.add_force_field(ForceField(field_type='turbulence', turb_strength=2.0,
+                                      turb_scale=35.0))
+        ps.add_noise_field(NoiseField(strength=1.5, scale=60.0))
+        for _ in range(30):
+            ps.update(1.0 / 60.0)
+        return _snap(ps)
+
+    if run(999) != run(999):
+        return "含噪声力场的系统同 seed 不可复现"
+    if run(1) == run(2):
+        return "不同 seed 应产生不同结果"
+
+    # (b) 派生确定性 + 显式种子保留 + reseed 重派
+    ps = ParticleSystem(max_particles=10, seed=42)
+    ff = ForceField(field_type='noise', noise_strength=3.0)
+    nf = NoiseField(strength=1.5)
+    ff_explicit = ForceField(field_type='noise', noise_strength=3.0, seed=12345)
+    ps.add_force_field(ff)
+    ps.add_noise_field(nf)
+    ps.add_force_field(ff_explicit)
+    if ff.seed is None or nf.seed is None:
+        return "系统播种时未派生力场 / 噪声场种子"
+    if ff_explicit.seed != 12345 or ff_explicit._system_derived:
+        return "用户显式种子被系统覆盖"
+    old_ff, old_nf = ff.seed, nf.seed
+    ps.reseed(43)
+    if ff.seed == old_ff or nf.seed == old_nf:
+        return "reseed 未重派派生种子"
+    if ff_explicit.seed != 12345:
+        return "reseed 误改用户显式种子"
+    return ""
+
+
+def check_magic():
+    """功能点 8（v1.2）：MagicEffectsManager —— 5 种效果 headless /
+    生命周期清空 / 同 seed 逐位可复现 / 未知效果报错。
+    """
+    from particlefx.systems.magic_effects import MagicEffectsManager
+
+    # (a) 全部预设可列举且能触发
+    presets = MagicEffectsManager(width=1).list_presets()
+    expected = {'arcane_burst', 'rune_ring', 'healing', 'void_tendril', 'magic_missile'}
+    if set(presets.keys()) != expected:
+        return "魔法预设集合不符：%r" % (set(presets.keys()),)
+    m = MagicEffectsManager()
+    m.cast('arcane_burst', x=400, y=300)
+    if m.particle_count <= 0:
+        return "arcane_burst 未产生粒子"
+    try:
+        m.cast('nonexistent', 0, 0)
+        return "未知魔法效果未抛 ValueError"
+    except ValueError:
+        pass
+
+    # (b) 爆发类效果生命周期结束应清空
+    m2 = MagicEffectsManager()
+    m2.cast('arcane_burst', x=400, y=300)
+    for _ in range(200):
+        m2.update(1.0 / 60.0)
+    if m2.particle_count != 0:
+        return "爆发效果推进后粒子未清空：%d" % m2.particle_count
+
+    # (c) 全部 5 种效果同 seed 逐位可复现、不同 seed 相异
+    def run(seed):
+        mm = MagicEffectsManager(width=800, height=600, seed=seed)
+        mm.cast('arcane_burst', x=400, y=300)
+        mm.cast('rune_ring', x=400, y=300)
+        mm.cast('healing', x=400, y=300)
+        mm.cast('void_tendril', x=400, y=300)
+        mm.cast('magic_missile', x=400, y=300, tx=500, ty=100)
+        for _ in range(120):
+            mm.update(1.0 / 60.0)
+        return [(round(p.x, 9), round(p.y, 9), round(p.vx, 9), round(p.vy, 9))
+                for p in mm.particles]
+
+    if run(42) != run(42):
+        return "魔法系统同 seed 不可复现"
+    if run(1) == run(2):
+        return "魔法系统不同 seed 应产生不同结果"
+    return ""
+
+
+def check_preset():
+    """功能点 9（v1.2）：场景配方与种子持久化 —— 导出 -> 重建可复现 /
+    文件往返 / EffectsFactory 带 seed 可复现 / 曲线忠实还原。
+    """
+    import tempfile
+    from particlefx import NoiseField
+    from particlefx.components.preset import (
+        system_to_recipe, recipe_to_system, save_preset, load_preset,
+        export_effect_recipe,
+    )
+
+    def _snap(ps):
+        return [(round(p.x, 9), round(p.y, 9), round(p.vx, 9), round(p.vy, 9))
+                for p in ps.particles]
+
+    # (a) 系统 -> 配方 -> 重建，同种子从干净状态推进逐位一致
+    ps = ParticleSystem(max_particles=2000, seed=12345)
+    ps.add_emitter(Emitter(x=400, y=300, rate=120.0, speed=140.0,
+                           spread=0.8, life=2.0, size=3.0))
+    ps.add_force_field(ForceField(field_type='noise', noise_strength=3.0,
+                                  noise_scale=40.0))
+    ps.add_noise_field(NoiseField(strength=1.5, scale=60.0))
+    recipe = system_to_recipe(ps, name='demo')
+    if recipe['seed'] != 12345 or recipe['emitters'][0]['seed'] is not None:
+        return "配方顶层 seed / 派生种子落地不正确"
+    rebuilt = recipe_to_system(recipe)
+    for _ in range(20):
+        ps.update(1.0 / 60.0)
+        rebuilt.update(1.0 / 60.0)
+    if _snap(ps) != _snap(rebuilt):
+        return "配方重建后模拟未逐位复现"
+
+    # (b) 文件往返
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, 'preset.json')
+        save_preset(recipe, path)
+        loaded = load_preset(path)
+        if loaded['seed'] != 12345:
+            return "配方文件往返后 seed 丢失"
+        r2 = recipe_to_system(loaded)
+        base = recipe_to_system(recipe)
+        for _ in range(15):
+            r2.update(1.0 / 60.0)
+            base.update(1.0 / 60.0)
+        if _snap(r2) != _snap(base):
+            return "配方文件往返后不可复现"
+
+    # (c) EffectsFactory 带 seed 可复现（含生命期曲线的声明式效果）
+    factory = EffectsFactory(validate=True)
+
+    def run():
+        s = factory.create('arcane_blast', x=400, y=300, seed=777)
+        for _ in range(15):
+            s.update(1.0 / 60.0)
+        return _snap(s)
+
+    if run() != run():
+        return "EffectsFactory.create 带 seed 不可复现"
+
+    # (d) 导出配方含曲线数据（关键帧列表），重建后与直接创建一致
+    exported = export_effect_recipe(factory, 'arcane_blast', seed=999, x=400, y=300)
+    if exported['seed'] != 999:
+        return "export_effect_recipe 未写入 seed"
+    has_curve = any(e.get('velocity_over_lifetime') or e.get('color_over_lifetime')
+                    for e in exported['emitters'])
+    if not has_curve:
+        return "导出配方丢失了生命期曲线数据"
+    rr = recipe_to_system(exported)
+    orig = factory.create('arcane_blast', x=400, y=300, seed=999)
+    for _ in range(15):
+        rr.update(1.0 / 60.0)
+        orig.update(1.0 / 60.0)
+    if _snap(rr) != _snap(orig):
+        return "含曲线的声明式效果配方重建后未逐位复现"
+    return ""
+
+
 def main():
     checks = [
         ("core emitter/gravity/lifetime", check_core_physics),
@@ -351,6 +530,9 @@ def main():
         ("LightFieldSystem headless interactivity", check_light_field),
         ("deterministic seeding (v1.2)", check_determinism),
         ("fixed-timestep sub-stepping (v1.2)", check_substep),
+        ("force/noise field seeding (v1.2)", check_field_seeding),
+        ("MagicEffectsManager (v1.2)", check_magic),
+        ("scene preset + seed persistence (v1.2)", check_preset),
     ]
     for label, func in checks:
         try:

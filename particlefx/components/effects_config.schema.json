@@ -69,6 +69,20 @@
         "bloom": {
           "type": "boolean"
         },
+        "seed": {
+          "type": "integer",
+          "description": "v1.2：系统随机种子；给定 -> 整场效果可复现"
+        },
+        "fixed_dt": {
+          "type": "number",
+          "minimum": 0,
+          "description": "v1.2：固定步长子步进（秒）；给定 -> 拆固定子步提升稳定性"
+        },
+        "max_substeps": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "v1.2：子步进上限（防止 spiral of death）"
+        },
         "emitters": {
           "type": "array",
           "minItems": 1,

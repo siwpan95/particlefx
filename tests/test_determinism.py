@@ -8,7 +8,7 @@ import random
 
 import pytest
 
-from particlefx import ParticleSystem, Emitter, ForceField
+from particlefx import ParticleSystem, Emitter, ForceField, NoiseField
 from particlefx.core.particle import Particle
 
 
@@ -142,3 +142,94 @@ def test_reseed_reproducible_from_new_seed():
     for _ in range(30):
         ps2.update(1 / 60)
     assert _snapshot(ps2) != fresh_snap
+
+
+# ============================================================
+#  v1.2：力场 / 噪声场内部噪声种子化
+# ============================================================
+
+def test_force_field_seed_derived_deterministically():
+    """系统播种时，未自带种子的力场由添加序号派发确定性子流（跨系统一致）。"""
+    def build(seed):
+        ps = ParticleSystem(max_particles=10, seed=seed)
+        ff0 = ForceField(field_type='noise', noise_strength=3.0, noise_scale=40.0)
+        ff1 = ForceField(field_type='turbulence', turb_strength=2.0, turb_scale=35.0)
+        ps.add_force_field(ff0)
+        ps.add_force_field(ff1)
+        return ps, ff0, ff1
+
+    ps_a, ffa0, ffa1 = build(42)
+    ps_b, ffb0, ffb1 = build(42)
+    # 同系统种子 -> 相同派生种子 + 相同噪声时间偏移
+    assert ffa0.seed == ffb0.seed
+    assert ffa1.seed == ffb1.seed
+    assert ffa0._noise_time_offset == ffb0._noise_time_offset
+    assert ffa0._system_derived and ffa1._system_derived
+    # 不同系统种子 -> 派生种子不同
+    ps_c, ffc0, _ = build(43)
+    assert ffc0.seed != ffa0.seed
+
+
+def test_force_field_explicit_seed_preserved_under_system_seed():
+    """用户显式带种子的力场不被系统重派（保留用户意图）。"""
+    ps = ParticleSystem(max_particles=10, seed=42)
+    ff = ForceField(field_type='noise', noise_strength=3.0, seed=12345)
+    ps.add_force_field(ff)
+    assert ff.seed == 12345
+    assert ff._system_derived is False
+
+
+def test_noise_field_seed_derived_unless_explicit():
+    """系统播种时，未显式指定 seed 的噪声场被派生；显式 seed 保留。"""
+    ps = ParticleSystem(max_particles=10, seed=42)
+    nf = NoiseField(strength=1.5, scale=60.0)  # 未显式 seed
+    ps.add_noise_field(nf)
+    assert nf.seed is not None
+    assert nf._system_derived is True
+
+    ps2 = ParticleSystem(max_particles=10, seed=42)
+    nf2 = NoiseField(strength=1.5, scale=60.0, seed=777)  # 显式 seed
+    ps2.add_noise_field(nf2)
+    assert nf2.seed == 777
+    assert nf2._system_derived is False
+
+
+def test_determinism_with_noise_force_fields():
+    """含噪声场 / 湍流场 / 独立噪声场的系统，在相同种子下逐位可复现。"""
+    def run():
+        ps = ParticleSystem(max_particles=2000, seed=999)
+        ps.add_emitter(Emitter(x=400, y=300, rate=80.0, speed=120.0,
+                               spread=0.8, life=2.0, size=2.0))
+        ps.add_force_field(ForceField(field_type='noise', noise_strength=3.0,
+                                      noise_scale=40.0))
+        ps.add_force_field(ForceField(field_type='turbulence', turb_strength=2.0,
+                                      turb_scale=35.0))
+        ps.add_noise_field(NoiseField(strength=1.5, scale=60.0))
+        for _ in range(30):
+            ps.update(1 / 60)
+        return _snapshot(ps)
+
+    assert run() == run()
+    assert len(run()) > 0
+
+
+def test_reseed_rederives_force_fields():
+    """reseed 一并重派由系统派生的力场 / 噪声场种子。"""
+    ps = ParticleSystem(max_particles=10, seed=1)
+    ff = ForceField(field_type='noise', noise_strength=3.0)
+    nf = NoiseField(strength=1.5)
+    ps.add_force_field(ff)
+    ps.add_noise_field(nf)
+    old_ff = ff.seed
+    old_nf = nf.seed
+    ps.reseed(2)
+    assert ff.seed != old_ff
+    assert nf.seed != old_nf
+    # 重新派生后再次 equal（确定性）
+    ps2 = ParticleSystem(max_particles=10, seed=2)
+    ff2 = ForceField(field_type='noise', noise_strength=3.0)
+    nf2 = NoiseField(strength=1.5)
+    ps2.add_force_field(ff2)
+    ps2.add_noise_field(nf2)
+    assert ff2.seed == ff.seed
+    assert nf2.seed == nf.seed

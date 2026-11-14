@@ -58,14 +58,16 @@ particlefx/
 │   │   ├── fluid_renderer_modernGL.py     # GPU 统一渲染器（4 种路径 + 软粒子）
 │   │   └── particle_sim_gpu.py     # v5.0：Compute Shader 全 GPU 模拟
 │   ├── components/
-│   │   ├── effects.py / effects_factory.py  # 效果工厂（代码 + JSON 声明式）
-│   │   ├── effects_config.json              # 30+ 预设效果配方
-│   │   ├── effects_config.schema.json       # v5.0：配方 JSON Schema
+│   │   ├── effects.py / effects_factory.py  # 效果工厂（代码 + JSON 声明式，v1.2 支持 seed）
+│   │   ├── effects_config.json              # 30+ 预设效果配方（含 magic 分类）
+│   │   ├── effects_config.schema.json       # v5.0：配方 JSON Schema（v1.2 增 seed/fixed_dt）
+│   │   ├── preset.py                        # v1.2：场景配方 + seed 持久化 / 分享
 │   │   └── palettes.json                    # 主题调色板库
 │   └── systems/
 │       ├── fireworks_system.py   # 烟花（14 样式 × 10 调色板）
 │       ├── weather_system.py     # 天气（6 种）
 │       ├── combat_effects.py     # 战斗特效（攻击/技能/飘字/死亡）
+│       ├── magic_effects.py      # v1.2：魔法效果（5 种，种子可复现）
 │       └── light_field.py        # 粒子光场（与 examples/web/light_field.html 同源双实现）
 ├── examples/                 # 交互 Demo + 视频生成器 + pygbag Web 入口
 │   ├── light_field_demo.py   # 光场 Python 交互 Demo（pygame）
@@ -232,7 +234,8 @@ python -m http.server 8000   # 然后访问 http://localhost:8000/examples/web/l
 
 - 雨水 / 雪花 / 暴雨 / 暴雪 / 风暴：见 `particlefx/systems/weather_system.py`（`WeatherSystem`，`create_weather(...)`）
 - 爆炸 / 攻击 / 技能 / 飘字 / 死亡：见 `particlefx/systems/combat_effects.py`（`CombatEffectsManager`，`create_combat_manager(...)`）
-- 魔法效果（Magic）：**仍为待创建扩展点**（可作为下一轮增强候选）
+- 魔法效果（Magic）：见 `particlefx/systems/magic_effects.py`（`MagicEffectsManager` / `create_magic(...)`，5 种效果），
+  以及 `effects_config.json` 的 `magic` 分类下 6 个**声明式**魔法配方（如 `arcane_blast`）
 
 ## 音频驱动
 
@@ -313,9 +316,9 @@ def update_particles(positions, velocities, lives, dt):
 
 详见 [docs/enhancements.md](docs/enhancements.md)。
 
-## 可复现与稳定（v1.2）
+## v1.2：可复现、稳定、魔法效果与场景配方
 
-v1.2 在**模拟内核**层面补齐两项业界标准能力（均**可选、零开销、向后兼容**）：
+v1.2 在**模拟内核**层面补齐业界标准能力，并落地此前空缺的扩展点（均**可选、零开销、向后兼容**）：
 
 ### ① 确定性（可复现）模拟
 
@@ -359,6 +362,62 @@ print(ps._last_substep_count)    # 诊断：本帧实际执行的子步数
 
 > 设计依据：Glenn Fiedler《Fix Your Timestep!》的固定步长 + 累加器 + spiral-of-death 上限；
 > 以及 DriftEngine《Determinism》的固定步长 + 种子化（可回滚）随机源模型。
+
+### ③ 全系统噪声种子化（可复现闭环）
+
+系统 seed 不仅覆盖发射与 LOD，还按「添加顺序」为 `ForceField`（噪声 / 湍流场的时间偏移）
+与 `NoiseField`（相位种子）派发确定性子流；`reseed()` 一并重派。用户显式指定的
+`seed` 始终保留。至此「同系统 seed + 同推进序列」可复现含全部噪声场的整场模拟。
+
+```python
+ps = ParticleSystem(max_particles=2000, seed=42)
+ps.add_force_field(ForceField(field_type='noise', noise_strength=3.0))  # 种子自动派生
+ps.add_noise_field(NoiseField(strength=1.5))
+ff = ForceField(field_type='turbulence', seed=999)  # 显式种子不被系统覆盖
+```
+
+### ④ 魔法效果系统（补齐原「待创建」扩展点）
+
+`MagicEffectsManager` 提供 5 种可种子复现的魔法效果，遵循 weather / combat 系统同样的
+`cast` -> `update(dt)` -> `render(renderer)` 接口，随机数全部走 `seed` 派生的独立随机源。
+
+```python
+from particlefx import MagicEffectsManager
+
+magic = MagicEffectsManager(width=800, height=600, seed=42)  # 同 seed 逐位复现
+magic.cast('arcane_burst', x=400, y=300)   # 奥术爆发
+magic.cast('rune_ring', x=400, y=300)      # 符文环
+magic.cast('healing', x=400, y=300)        # 治愈微光
+magic.cast('void_tendril', x=400, y=300)   # 虚空触须
+magic.cast('magic_missile', x=400, y=300, tx=500, ty=100)  # 魔法飞弹（拖尾 + 命中引爆）
+for _ in range(120):
+    magic.update(1/60)
+magic.render(renderer)
+```
+
+### ⑤ 场景配方 + seed 持久化与分享（创意库）
+
+`particlefx.components.preset` 把「结构 + 参数 + 系统种子」导出为一份 JSON 配方，
+一份配方 + 一个种子即可完整复现场景，便于内容沉淀与分享。生命期曲线是关键帧数据，
+导出 / 重建**无损**；`EffectsFactory.create(..., seed=...)` 亦支持声明式配方可复现。
+
+```python
+from particlefx.components.preset import (
+    system_to_recipe, recipe_to_system, save_preset, load_preset, export_effect_recipe,
+)
+
+recipe = system_to_recipe(ps, name='nebula')  # 顶层只存系统 seed，派生子流重建时重派
+save_preset(recipe, 'presets/nebula.json')
+rebuilt = recipe_to_system(load_preset('presets/nebula.json'))
+# 同推进序列 -> 与 ps 逐位一致
+
+# 由已有声明式效果导出带种子的可分享配方
+from particlefx.components.effects_factory import EffectsFactory
+recipe = export_effect_recipe(EffectsFactory(), 'arcane_blast', seed=999, x=400, y=300)
+```
+
+> 注：配方记录的是「结构 + 种子」，不含运行时累计时间（如发射器 `accumulated_time`），
+> 因此复现请让原始系统与重建系统都从**干净状态**开始推进。
 
 ## 许可证
 
