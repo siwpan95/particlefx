@@ -24,6 +24,8 @@ import math
 from dataclasses import dataclass, field, MISSING
 from typing import List, Tuple, Optional, Callable, Dict, Any
 
+from .random import derive_seed
+
 
 # ================================================================
 #  曲线/插值辅助函数
@@ -134,138 +136,143 @@ class EmitterShape:
     randomize_direction: bool = True  # 是否根据形状随机化初始速度方向
     
     def sample_position(self, base_x: float, base_y: float,
-                        speed: float, spread: float) -> Tuple[float, float, float, float]:
+                        speed: float, spread: float, rng=random) -> Tuple[float, float, float, float]:
         """
         采样发射位置和方向
-        
+
+        Args:
+            rng: 随机源（``random.Random`` 实例或全局 ``random`` 模块）。
+                由调用方（Emitter）按系统/发射器种子注入；默认为全局 ``random``，
+                保持旧版行为不变。
+
         Returns:
             (x, y, vx, vy) : 初始位置和速度分量
         """
         if self.shape_type == 'point':
-            return self._sample_point(base_x, base_y, speed, spread)
+            return self._sample_point(base_x, base_y, speed, spread, rng)
         elif self.shape_type == 'sphere':
-            return self._sample_sphere(base_x, base_y, speed, spread)
+            return self._sample_sphere(base_x, base_y, speed, spread, rng)
         elif self.shape_type == 'cone':
-            return self._sample_cone(base_x, base_y, speed, spread)
+            return self._sample_cone(base_x, base_y, speed, spread, rng)
         elif self.shape_type == 'circle':
-            return self._sample_circle(base_x, base_y, speed, spread)
+            return self._sample_circle(base_x, base_y, speed, spread, rng)
         elif self.shape_type == 'rectangle':
-            return self._sample_rectangle(base_x, base_y, speed, spread)
+            return self._sample_rectangle(base_x, base_y, speed, spread, rng)
         elif self.shape_type == 'edge':
-            return self._sample_edge(base_x, base_y, speed, spread)
+            return self._sample_edge(base_x, base_y, speed, spread, rng)
         else:
-            return self._sample_point(base_x, base_y, speed, spread)
+            return self._sample_point(base_x, base_y, speed, spread, rng)
 
-    def _sample_point(self, bx, by, speed, spread):
+    def _sample_point(self, bx, by, speed, spread, rng=random):
         """点发射"""
-        angle = random.uniform(-spread, spread)
+        angle = rng.uniform(-spread, spread)
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return bx, by, vx, vy
 
-    def _sample_sphere(self, bx, by, speed, spread):
+    def _sample_sphere(self, bx, by, speed, spread, rng=random):
         """球形发射"""
         r = self.radius
         if self.emit_from_shell:
             # 从球面采样
-            angle_2d = random.uniform(0, 2 * math.pi)
+            angle_2d = rng.uniform(0, 2 * math.pi)
             px = bx + r * math.cos(angle_2d)
             py = by + r * math.sin(angle_2d)
         else:
             # 从球内采样（均匀分布）
-            angle_2d = random.uniform(0, 2 * math.pi)
-            dist = r * math.sqrt(random.uniform(0, 1))  # sqrt 让分布更均匀
+            angle_2d = rng.uniform(0, 2 * math.pi)
+            dist = r * math.sqrt(rng.uniform(0, 1))  # sqrt 让分布更均匀
             px = bx + dist * math.cos(angle_2d)
             py = by + dist * math.sin(angle_2d)
-        
+
         # 方向：从中心向外辐射（可加 spread 扰动）
         dx = px - bx
         dy = py - by
         dist = math.sqrt(dx*dx + dy*dy) if (dx*dx + dy*dy) > 1e-6 else 1.0
-        
+
         if self.randomize_direction:
             base_angle = math.atan2(dy, dx)
-            angle = base_angle + random.uniform(-spread, spread)
+            angle = base_angle + rng.uniform(-spread, spread)
         else:
-            angle = random.uniform(-spread, spread)
-        
+            angle = rng.uniform(-spread, spread)
+
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return px, py, vx, vy
 
-    def _sample_cone(self, bx, by, speed, spread):
+    def _sample_cone(self, bx, by, speed, spread, rng=random):
         """锥形发射（向上/指定方向的锥体）"""
         # 锥顶在 (bx, by)，开口朝上
         r_at_base = self.radius
         h = self.height
-        
+
         # 在底面上随机取一点
-        cone_angle = random.uniform(0, 2 * math.pi)
-        r_sample = r_at_base * math.sqrt(random.uniform(0, 1))
-        
+        cone_angle = rng.uniform(0, 2 * math.pi)
+        r_sample = r_at_base * math.sqrt(rng.uniform(0, 1))
+
         px = bx + r_sample * math.cos(cone_angle)
         py = by + h  # 底部（假设锥尖在上）
-        
+
         # 方向：从锥尖向底面扩散
         dx = px - bx
         dy = py - by
         dist = math.sqrt(dx*dx + dy*dy) if (dx*dx + dy*dy) > 1e-6 else 1.0
-        
+
         if self.randomize_direction:
             base_angle = math.atan2(dy, dx)
-            angle = base_angle + random.uniform(-spread * 0.5, spread * 0.5)
+            angle = base_angle + rng.uniform(-spread * 0.5, spread * 0.5)
         else:
-            angle = math.pi / 2 + random.uniform(-spread, spread)
-        
+            angle = math.pi / 2 + rng.uniform(-spread, spread)
+
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return px, py, vx, vy
 
-    def _sample_circle(self, bx, by, speed, spread):
+    def _sample_circle(self, bx, by, speed, spread, rng=random):
         """圆形发射（平面内的圆）"""
         r = self.radius
         if self.emit_from_shell:
-            angle_2d = random.uniform(0, 2 * math.pi)
+            angle_2d = rng.uniform(0, 2 * math.pi)
             px = bx + r * math.cos(angle_2d)
             py = by + r * math.sin(angle_2d)
         else:
-            angle_2d = random.uniform(0, 2 * math.pi)
-            dist = r * math.sqrt(random.uniform(0, 1))
+            angle_2d = rng.uniform(0, 2 * math.pi)
+            dist = r * math.sqrt(rng.uniform(0, 1))
             px = bx + dist * math.cos(angle_2d)
             py = by + dist * math.sin(angle_2d)
-        
+
         if self.randomize_direction:
-            base_angle = random.uniform(0, 2 * math.pi)
-            angle = base_angle + random.uniform(-spread, spread)
+            base_angle = rng.uniform(0, 2 * math.pi)
+            angle = base_angle + rng.uniform(-spread, spread)
         else:
-            angle = random.uniform(-spread, spread)
-        
+            angle = rng.uniform(-spread, spread)
+
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return px, py, vx, vy
 
-    def _sample_rectangle(self, bx, by, speed, spread):
+    def _sample_rectangle(self, bx, by, speed, spread, rng=random):
         """矩形区域发射"""
         hw = self.width / 2
         hh = self.rect_height / 2
-        px = bx + random.uniform(-hw, hw)
-        py = by + random.uniform(-hh, hh)
-        angle = random.uniform(-spread, spread)
+        px = bx + rng.uniform(-hw, hw)
+        py = by + rng.uniform(-hh, hh)
+        angle = rng.uniform(-spread, spread)
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return px, py, vx, vy
 
-    def _sample_edge(self, bx, by, speed, spread):
+    def _sample_edge(self, bx, by, speed, spread, rng=random):
         """边缘线段发射"""
         half_len = self.edge_length / 2
         cos_a = math.cos(self.edge_angle)
         sin_a = math.sin(self.edge_angle)
-        
-        offset = random.uniform(-half_len, half_len)
+
+        offset = rng.uniform(-half_len, half_len)
         px = bx + offset * cos_a
         py = by + offset * sin_a
-        
-        angle = random.uniform(-spread, spread)
+
+        angle = rng.uniform(-spread, spread)
         vx = speed * math.cos(angle)
         vy = speed * math.sin(angle)
         return px, py, vx, vy
@@ -1140,6 +1147,8 @@ class Emitter:
                  emissive_strength: float = 0.0,
                  # --- 对象池工厂（v5.0，ParticleSystem 内部自动注入）---
                  particle_factory: Optional[Callable[..., Particle]] = None,
+                 # --- 可复现模拟（v1.2）：发射器级种子；None = 跟随系统 / 全局 random ---
+                 seed: Optional[int] = None,
                  ):
         self.x = x
         self.y = y
@@ -1174,7 +1183,23 @@ class Emitter:
         self.emissive_strength = emissive_strength
         self.particle_factory = particle_factory
 
+        # === 可复现模拟（v1.2）：发射器级种子化随机源 ===
+        # seed 给定 -> 独立 random.Random 流；否则 _rng=None，运行时回退全局 random（旧行为不变）。
+        self.seed = seed
+        self._rng = random.Random(seed) if seed is not None else None
+        # 标记该发射器的随机流是否由所在 ParticleSystem 按系统 seed 派生（reseed 时以此判断）
+        self._system_derived = False
+
         self.accumulated_time = 0.0
+
+    @property
+    def rng(self):
+        """发射器实际使用的随机源。
+
+        自带种子 -> 独立 ``random.Random`` 流；否则回退全局 ``random`` 模块，
+        保证未显式播种时与旧版行为逐位一致。
+        """
+        return self._rng if self._rng is not None else random
 
     def emit(self, dt: float,
              audio_data: Optional[dict] = None,
@@ -1192,20 +1217,20 @@ class Emitter:
 
         new_particles = []
         for _ in range(num_to_emit):
-            # 使用形状采样获取位置和方向
+            # 使用形状采样获取位置和方向（rng 由系统/发射器种子决定，未播种则回退全局）
             px, py, vx, vy = self.shape.sample_position(
-                self.x, self.y, self.speed, self.spread
+                self.x, self.y, self.speed, self.spread, self.rng
             )
-            
+
             # 方向偏移：将发射锥旋转到指定方向
             if self.direction != 0.0:
                 cos_a = math.cos(self.direction)
                 sin_a = math.sin(self.direction)
                 vx, vy = vx * cos_a - vy * sin_a, vx * sin_a + vy * cos_a
-            
-            rotation = random.uniform(*self.rotation_range)
-            angular_velocity = random.uniform(*self.angular_velocity_range)
-            mass = random.uniform(*self.mass_range)
+
+            rotation = self.rng.uniform(*self.rotation_range)
+            angular_velocity = self.rng.uniform(*self.angular_velocity_range)
+            mass = self.rng.uniform(*self.mass_range)
 
             p_kwargs = dict(
                 x=px, y=py, vx=vx, vy=vy,
@@ -1267,7 +1292,12 @@ class ParticleSystem:
     def __init__(self, max_particles: int = 1000,
                  use_pool: bool = False,
                  use_spatial_hash: bool = False,
-                 spatial_hash_cell_size: float = 64.0):
+                 spatial_hash_cell_size: float = 64.0,
+                 # === v1.2：可复现模拟（种子化随机源）===
+                 seed: Optional[int] = None,
+                 # === v1.2：固定步长子步进（数值稳定；None = 关闭，旧行为）===
+                 fixed_dt: Optional[float] = None,
+                 max_substeps: int = 4):
         self.max_particles = max_particles
         self.particles: List[Particle] = []
         self.emitters: List[Emitter] = []
@@ -1333,12 +1363,30 @@ class ParticleSystem:
         self._min_emissive_strength: float = 0.0
         self.particle_lights: List[LightSource] = []
 
+        # === v1.2：可复现模拟（种子化随机源）===
+        # seed=None -> _rng=None，发射/LOD 随机回退全局 random，与旧版逐位一致。
+        self._seed = seed
+        self._rng = random.Random(seed) if seed is not None else None
+
+        # === v1.2：固定步长子步进 ===
+        # fixed_dt=None -> 关闭（单步积分传入的 dt，旧行为）；否则把超过 fixed_dt 的
+        # dt 拆成若干固定子步，提升强力场 / 低帧率下的数值稳定性（半隐式欧拉）。
+        self.fixed_dt = fixed_dt
+        self.max_substeps = max(1, int(max_substeps))
+        # 最近一次 update 实际执行的子步数（用于诊断 / spiral-of-death cap 观测）。
+        self._last_substep_count: int = 0
+
     # --- 组件添加 ---
 
     def add_emitter(self, emitter: Emitter):
         # v5.0：启用对象池时注入工厂，发射路径自动复用粒子实例
         if self._pool is not None and emitter.particle_factory is None:
             emitter.particle_factory = self._pool.acquire
+        # v1.2：系统已播种且发射器自身未带种子 -> 由其添加顺序派发一条独立确定性子流，
+        # 使「系统 seed + 发射器添加顺序」即可完整复现，同时各发射器互不干扰。
+        if self._rng is not None and emitter._rng is None:
+            emitter._rng = random.Random(self._derive_seed(len(self.emitters)))
+            emitter._system_derived = True
         self.emitters.append(emitter)
 
     def add_force_field(self, force_field: ForceField):
@@ -1513,10 +1561,15 @@ class ParticleSystem:
 
     # --- 主更新循环 ---
 
-    def update(self, dt: float, audio_data: Optional[dict] = None):
-        """更新粒子系统（完整管线）"""
+    def _step(self, dt: float, audio_data: Optional[dict] = None):
+        """单步推进粒子系统（完整管线；固定步长子步进时每子步调用一次）。
+
+        见 :meth:`update` —— 对外接口负责按 ``fixed_dt`` 把大 ``dt`` 拆成若干
+        固定子步并调用本方法；本方法本身只做「一步 dt」的积分，与旧版 ``update``
+        逐位一致。
+        """
         self._time += dt
-        
+
         # LOD 倍率
         lod_mult = self._calc_lod_multiplier()
         
@@ -1526,8 +1579,8 @@ class ParticleSystem:
 
         # --- 发射阶段 ---
         for emitter in self.emitters:
-            # LOD 减少发射量
-            if self.lod_enabled and lod_mult < 1.0 and random.random() > lod_mult:
+            # LOD 减少发射量（v1.2：优先使用系统种子化随机源，保证可复现）
+            if self.lod_enabled and lod_mult < 1.0 and (self._rng or random).random() > lod_mult:
                 continue
             
             new_particles = emitter.emit(dt, audio_data, self._time)
@@ -1621,6 +1674,71 @@ class ParticleSystem:
 
         # v5.0：粒子光源更新（未开启时零开销）
         self._update_particle_lights()
+
+    # --- 对外更新接口：固定步长子步进（v1.2）---
+
+    def update(self, dt: float, audio_data: Optional[dict] = None):
+        """更新粒子系统（公开接口，含可选固定步长子步进）。
+
+        当 ``fixed_dt`` 为 ``None``（默认）时，等价于旧版「单步积分传入的 dt」，
+        行为逐位一致。当 ``fixed_dt`` 给定且 ``dt > fixed_dt`` 时，把这一帧的 ``dt``
+        拆成若干长度为 ``fixed_dt`` 的子步推进，提升强力场 / 低帧率下的数值稳定性
+        （半隐式欧拉在固定小步长下更稳定，避免大 dt 引发的积分爆炸 / 穿透）。
+
+        子步数受 ``max_substeps`` 上限保护，防止卡顿后「追赶」过多子步导致
+        额外耗时、进一步掉帧的 *spiral of death*（详见 Glenn Fiedler
+        "Fix Your Timestep!"）。
+
+        Args:
+            dt: 本帧期望推进的仿真时间（秒）。
+            audio_data: 可选音频联动数据（同旧版）。
+        """
+        if self.fixed_dt and dt > self.fixed_dt and self.max_substeps >= 1:
+            n = min(self.max_substeps, max(1, math.ceil(dt / self.fixed_dt)))
+            sub = dt / n
+            self._last_substep_count = n
+            for _ in range(n):
+                self._step(sub, audio_data)
+        else:
+            self._last_substep_count = 1
+            self._step(dt, audio_data)
+
+    # --- 可复现模拟便捷方法（v1.2）---
+
+    def _derive_seed(self, salt: int) -> int:
+        """由系统 seed 与 salt 派生一条确定性子流种子（见 ``core.random.derive_seed``）。"""
+        if self._seed is None:
+            return 0
+        return derive_seed(int(self._seed), int(salt))
+
+    def reseed(self, seed: Optional[int]):
+        """重新设定系统随机种子。
+
+        会一并重派所有「由本系统派生」的发射器子流（即添加时未自带种子的那些），
+        使整场模拟从新的系统 seed 重新可复现；自带种子的发射器不受影响。
+
+        Args:
+            seed: 新种子；``None`` 关闭种子化（发射/LOD 随机回退全局 ``random``）。
+        """
+        self._seed = seed
+        self._rng = random.Random(seed) if seed is not None else None
+        for idx, em in enumerate(self.emitters):
+            if getattr(em, '_system_derived', False):
+                em._rng = random.Random(self._derive_seed(idx)) if self._rng is not None else None
+        return self
+
+    def save_rng_state(self):
+        """返回系统随机源状态（可序列化元组），用于快照 / 确定性回滚。
+
+        仅在 ``seed`` 模式（系统已播种）下有效；未播种时返回 ``None``。
+        """
+        return self._rng.getstate() if self._rng is not None else None
+
+    def restore_rng_state(self, state):
+        """恢复系统随机源状态，与 :meth:`save_rng_state` 配对实现确定性回滚。"""
+        if self._rng is not None and state is not None:
+            self._rng.setstate(state)
+        return self
 
     def _play_sound(self, sound, volume: float = 1.0):
         """播放音效（需要 pygame.mixer 已初始化）"""

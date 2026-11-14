@@ -29,37 +29,11 @@ from ..core.particle import Particle, ParticleSystem
 
 
 # ================================================================
-#  确定性随机数（与 HTML 版 mulberry32 / hashSeed 对齐）
+#  确定性随机数（与 HTML 版 mulberry32 / hashSeed 逐位对齐）
+#  统一从 particlefx.core.random 导入，避免与核心库 / 其他系统重复实现。
 # ================================================================
 
-def _imul(a: int, b: int) -> int:
-    """JS Math.imul 等价：32 位整数乘法（取乘积低 32 位）。
-
-    JavaScript 的算术/位运算隐式在 32 位上截断，Python 不会；
-    必须在乘法处显式掩码，否则 rng() 会溢出成天文数字。
-    """
-    return (int(a) * int(b)) & 0xFFFFFFFF
-
-
-def mulberry32(a: int):
-    """确定性 32 位 PRNG，与 HTML 版 mulberry32 逐位对齐（>>> 为无符号移位）。"""
-    a = int(a) & 0xFFFFFFFF
-
-    def _next():
-        nonlocal a
-        a = (a + 0x6D2B79F5) & 0xFFFFFFFF
-        t = _imul(a ^ (a >> 15), 1 | a)
-        t = (t + _imul(t ^ (t >> 7), 61)) & 0xFFFFFFFF
-        return ((t ^ (t >> 14)) & 0xFFFFFFFF) / 4294967296
-
-    return _next
-
-
-def hash_seed(seed: int, i: int) -> int:
-    """用 (seed, 粒子序号) 派生每颗粒子独立的确定性随机源。"""
-    x = (int(seed) ^ (i * 0x9E3779B1)) & 0xFFFFFFFF
-    x = (x * 0x85EBCA6B) & 0xFFFFFFFF
-    return x
+from ..core.random import mulberry32, hash_seed
 
 
 # ================================================================

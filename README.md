@@ -42,11 +42,13 @@ particlefx/
 ├── particlefx/           # Python 包（命名空间根）
 │   ├── core/
 │   │   ├── particle.py         # 核心粒子类（Particle/ParticleSystem/Emitter/ForceField/
-│   │   │                       #   ParticleAttractor/ParticlePool/碰撞/光照/LOD/事件）
+│   │   │                       #   ParticleAttractor/ParticlePool/碰撞/光照/LOD/事件/
+│   │   │                       #   种子化随机源/固定步长子步进）
 │   │   ├── particle_numpy.py   # NumPy 向量化粒子系统（SoA）
 │   │   ├── particle_numba.py   # v5.0：Numba JIT 更新内核（可选依赖）
 │   │   ├── particle_taichi.py  # v5.0：Taichi WCSPH 流体后端（可选依赖）
-│   │   └── spatial_hash.py     # v5.0：均匀网格空间哈希
+│   │   ├── spatial_hash.py     # v5.0：均匀网格空间哈希
+│   │   └── random.py           # v1.2：确定性 PRNG（mulberry32/hash_seed/derive_seed）
 │   ├── renderers/
 │   │   ├── pygame_renderer.py      # Pygame 渲染器（additive/screen 混合 + Bloom）
 │   │   ├── pil_renderer.py         # PIL 渲染器（离屏/GIF/视频帧/分层渲染）
@@ -226,12 +228,11 @@ python -m http.server 8000   # 然后访问 http://localhost:8000/examples/web/l
 
 物理为逐粒子纯 Python 积分（复用 `Particle`），与 Web 版逐帧对齐；see `selfcheck.py` 的 `check_light_field()` 做无头校验（流场 / 确定性 / 吸引排斥 / 冲击波 / 换色）。
 
-### 其他效果（待创建）
+### 其他效果
 
-- 雨水（Rain）
-- 雪花（Snow）
-- 爆炸（Explosion）
-- 魔法效果（Magic）
+- 雨水 / 雪花 / 暴雨 / 暴雪 / 风暴：见 `particlefx/systems/weather_system.py`（`WeatherSystem`，`create_weather(...)`）
+- 爆炸 / 攻击 / 技能 / 飘字 / 死亡：见 `particlefx/systems/combat_effects.py`（`CombatEffectsManager`，`create_combat_manager(...)`）
+- 魔法效果（Magic）：**仍为待创建扩展点**（可作为下一轮增强候选）
 
 ## 音频驱动
 
@@ -311,6 +312,53 @@ def update_particles(positions, velocities, lives, dt):
 | ⑨ | Compute 全 GPU 模拟 | `particlefx.renderers.particle_sim_gpu.GPUParticleSimulator` | moderngl |
 
 详见 [docs/enhancements.md](docs/enhancements.md)。
+
+## 可复现与稳定（v1.2）
+
+v1.2 在**模拟内核**层面补齐两项业界标准能力（均**可选、零开销、向后兼容**）：
+
+### ① 确定性（可复现）模拟
+
+通过种子化随机源，让「同 seed + 同推进序列」得到逐位一致的模拟结果，适用于可复现测试、
+内容创作复现，以及未来回放 / 联机的基础。
+
+```python
+from particlefx import ParticleSystem, Emitter, ForceField
+
+# 系统级种子：所有未自带种子的发射器按「添加顺序」派发独立确定性子流
+ps = ParticleSystem(max_particles=2000, seed=12345)
+ps.add_emitter(Emitter(x=400, y=300, rate=200.0, speed=120.0, spread=0.8, life=2.0))
+ps.add_force_field(ForceField(field_type='gravity', strength=60.0))
+for _ in range(60):
+    ps.update(1/60)
+# 同 seed 重建并同样推进 => 粒子序列逐位一致
+
+# 便捷方法：回滚 / 快照（依赖 Python random.Random 的可序列化状态）
+state = ps.save_rng_state()      # -> tuple；未播种时返回 None
+ps.restore_rng_state(state)      # 还原随机源（回放 / 确定性回滚）
+ps.reseed(999)                   # 改种子并重派系统管理的发射器子流
+```
+
+- 未传 `seed` 时回退全局 `random`，与旧版行为**逐位一致**（默认不引入任何随机源变化）。
+- 发射器也可单独 `Emitter(..., seed=...)` 自带种子，独立于系统种子。
+- 确定性 PRNG（`mulberry32` / `hash_seed` / `derive_seed`）统一在
+  `particlefx/core/random.py`，与 `examples/web/light_field.html` 逐位对齐。
+
+### ② 固定步长子步进（数值稳定）
+
+`update(dt)` 默认行为不变（单步积分传入的 dt）。当设置 `fixed_dt` 且 `dt > fixed_dt`
+时，自动把这一帧拆成若干固定子步推进，避免低帧率 / 大 dt 下的积分爆炸与穿透；
+子步数受 `max_substeps` 上限保护，防止卡顿后无限追赶（spiral of death）。
+
+```python
+# 以 1/120s 固定步长推进，单帧最多 8 个子步
+ps = ParticleSystem(max_particles=5000, fixed_dt=1/120, max_substeps=8)
+ps.update(frame_dt)              # frame_dt 可能远大于 1/120，内部自动拆步
+print(ps._last_substep_count)    # 诊断：本帧实际执行的子步数
+```
+
+> 设计依据：Glenn Fiedler《Fix Your Timestep!》的固定步长 + 累加器 + spiral-of-death 上限；
+> 以及 DriftEngine《Determinism》的固定步长 + 种子化（可回滚）随机源模型。
 
 ## 许可证
 

@@ -4,6 +4,30 @@
 
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，版本号遵循 [语义化版本](https://semver.org/lang/zh-CN/)。
 
+## [Unreleased]
+
+### Added
+
+- **可复现（确定性）模拟（v1.2）**：`ParticleSystem(seed=...)` 与 `Emitter(seed=...)`
+  支持种子化随机源；系统级种子按发射器「添加顺序」派发独立确定性子流，使
+  「系统 seed + 发射器添加顺序 + 同推进序列」即可逐位复现整场模拟。新增便捷方法
+  `reseed()` / `save_rng_state()` / `restore_rng_state()`（回滚 / 快照，依赖
+  Python `random.Random` 可序列化状态）。未传 `seed` 时回退全局 `random`，与旧版逐位一致。
+- **固定步长子步进（v1.2）**：`ParticleSystem(fixed_dt=..., max_substeps=...)`
+  在 `dt > fixed_dt` 时自动把一帧拆成若干固定子步推进（半隐式欧拉稳定性），
+  子步数受 `max_substeps` 上限保护（spiral-of-death 防护）。默认 `fixed_dt=None`
+  时退化为旧版单步积分，行为逐位一致。
+- **共享确定性随机模块**：新增 `particlefx/core/random.py`（`mulberry32` /
+  `hash_seed` / `derive_seed`），`light_field.py` 改为复用，消除与 Web 端的重复实现。
+- 新增 `tests/test_determinism.py` / `tests/test_substep.py` 与 `selfcheck.py` 的
+  `check_determinism()` / `check_substep()` 无头校验。
+
+### Changed
+
+- `EmitterShape.sample_position` 及全部 `_sample_*` 增加可选 `rng` 参数；发射路径
+  （形状采样 + 旋转 / 角速度 / 质量）与 LOD 随机门槛改用系统 / 发射器种子化随机源。
+- `ParticleSystem.update()` 内部重构为 `_step()` + 子步进包装；公开 `update()` 对外契约不变。
+
 ## [1.1.1] - 2026-11-13
 
 ### Changed

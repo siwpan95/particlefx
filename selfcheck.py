@@ -6,7 +6,11 @@ particlefx.components.effects_factory（渲染器与 examples 一律不 import�
 验证点：
 1. 核心物理：发射器产出粒子、重力使 vy 增加、Particle 的位置积分与生命衰减；
 2. 烟花系统 headless：火箭上升 -> 到高爆炸 -> 爆炸粒子存活；
-3. 声明式效果工厂：effects_config.json 往返 + 按配置创建 ParticleSystem 并推进。
+3. 声明式效果工厂：effects_config.json 往返 + 按配置创建 ParticleSystem 并推进；
+4. 粒子光场 headless：确定性播种 / 流场运动 / 吸引排斥 / 冲击波 / seed 可复现；
+5. （v1.2）可复现模拟：种子化随机源 —— 同种子可复现 / 不同种子相异 /
+   每发射器独立子流 / 发射器级 RNG 回滚；
+6. （v1.2）固定步长子步进：大 dt 拆步逼近细积分 / 默认关闭逐位一致 / spiral 上限。
 
 运行：python selfcheck.py
 """
@@ -223,12 +227,130 @@ def check_light_field():
     return ""
 
 
+def check_determinism():
+    """功能点 5（v1.2）：种子化随机源 —— 同种子可复现 / 不同种子相异 /
+    每发射器独立子流 / 发射器级 RNG 可回滚。
+    """
+    from particlefx.core.particle import Particle
+
+    def _snap(ps):
+        return [(round(p.x, 9), round(p.y, 9), round(p.vx, 9), round(p.vy, 9),
+                round(p.life, 9), tuple(p.color)) for p in ps.particles]
+
+    # (a) 同系统 seed + 同推进序列 => 逐位一致；不同 seed => 结果不同
+    def run(seed):
+        ps = ParticleSystem(max_particles=4000, seed=seed)
+        ps.add_emitter(Emitter(x=400, y=300, rate=200.0, speed=120.0,
+                               spread=0.8, life=2.0, size=2.0))
+        ps.add_force_field(ForceField(field_type='gravity', strength=60.0))
+        for _ in range(40):
+            ps.update(1.0 / 60.0)
+        return _snap(ps)
+
+    if run(12345) != run(12345):
+        return "种子可复现失败：同 seed 两次推进结果不一致"
+    if run(1) == run(2):
+        return "不同 seed 应当产生不同结果（若偶发相等请检查随机源）"
+
+    # (b) 每发射器独立子流：同种子、两个发射器，跨次一致且两发射器不重合
+    def run2():
+        ps = ParticleSystem(max_particles=5000, seed=999)
+        for k in range(2):
+            ps.add_emitter(Emitter(x=400 + k * 50, y=300, rate=150.0, speed=120.0,
+                                   spread=1.0, life=2.0, size=2.0))
+        for _ in range(10):
+            ps.update(1.0 / 60.0)
+        return [(round(p.x, 6), round(p.y, 6)) for p in ps.particles]
+
+    a, b = run2(), run2()
+    if a != b:
+        return "每发射器独立子流不可复现"
+    mid = len(a) // 2
+    if not any(abs(a[i][0] - a[j][0]) > 1e-3 or abs(a[i][1] - a[j][1]) > 1e-3
+               for i in range(0, mid) for j in range(mid, len(a))):
+        return "两个发射器子流意外重合（未正确派生）"
+
+    # (c) 发射器级 RNG 可回滚：保存起始状态 -> 推进 -> 恢复 -> 同次 emit 逐位一致
+    em = Emitter(x=400, y=300, rate=100.0, speed=50.0, spread=1.0, life=1.0, seed=7)
+    st = em._rng.getstate()
+    p1 = em.emit(0.1)
+    em._rng.setstate(st)
+    p2 = em.emit(0.1)
+    if [(p.x, p.y, p.vx, p.vy, p.rotation, p.mass) for p in p1] != \
+       [(p.x, p.y, p.vx, p.vy, p.rotation, p.mass) for p in p2]:
+        return "发射器 RNG 回滚失败：emit 产物不一致"
+    return ""
+
+
+def check_substep():
+    """功能点 6（v1.2）：固定步长子步进 —— 大 dt 拆步后逼近细积分、
+    默认关闭逐位一致、spiral-of-death 上限保护。
+    """
+    from particlefx.core.particle import Particle
+
+    def _seed(ps, n=3):
+        for i in range(n):
+            ps.particles.append(Particle(x=400.0 + i * 10, y=300.0, vx=0.0, vy=0.0,
+                                         life=1.0, max_life=10.0, size=2.0, color=(1, 2, 3)))
+        return ps
+
+    # (a) 子步进（fixed_dt=1/60）逼近以同步长逐帧推进的细积分（纯重力半隐式欧拉，逐位一致）
+    fine = ParticleSystem(max_particles=200, fixed_dt=None)
+    fine.add_emitter(Emitter(x=400, y=300, rate=0.0, speed=0.0, life=10.0, size=2.0))
+    fine.add_force_field(ForceField(field_type='gravity', strength=200.0))
+    _seed(fine, 3)
+    for _ in range(20):
+        fine.update(1.0 / 60.0)
+    fine_state = [(p.x, p.y, p.vx, p.vy) for p in fine.particles]
+
+    sub = ParticleSystem(max_particles=200, fixed_dt=1.0 / 60.0, max_substeps=30)
+    sub.add_emitter(Emitter(x=400, y=300, rate=0.0, speed=0.0, life=10.0, size=2.0))
+    sub.add_force_field(ForceField(field_type='gravity', strength=200.0))
+    _seed(sub, 3)
+    sub.update(20.0 / 60.0)  # 一帧内拆成 20 个固定子步
+    sub_state = [(p.x, p.y, p.vx, p.vy) for p in sub.particles]
+    if any(abs(sx - fx) > 1e-9 or abs(sy - fy) > 1e-9
+           for (sx, sy, _, _), (fx, fy, _, _) in zip(sub_state, fine_state)):
+        return "子步进未逐位匹配细积分"
+
+    # (b) 默认 fixed_dt=None 与显式 fixed_dt>dt 均只走单步（旧行为不变）
+    d1 = ParticleSystem(max_particles=100)
+    d1.add_emitter(Emitter(x=400, y=300, rate=0.0, speed=0.0, life=10.0, size=2.0))
+    d1.add_force_field(ForceField(field_type='gravity', strength=200.0))
+    _seed(d1, 3)
+    d1.update(0.1)
+    d2 = ParticleSystem(max_particles=100, fixed_dt=1.0)
+    d2.add_emitter(Emitter(x=400, y=300, rate=0.0, speed=0.0, life=10.0, size=2.0))
+    d2.add_force_field(ForceField(field_type='gravity', strength=200.0))
+    _seed(d2, 3)
+    d2.update(0.1)
+    if [(p.x, p.y, p.vx, p.vy) for p in d1.particles] != \
+       [(p.x, p.y, p.vx, p.vy) for p in d2.particles]:
+        return "默认关闭子步进与旧行为不一致"
+    if d1._last_substep_count != 1 or d2._last_substep_count != 1:
+        return "默认路径应只走单步"
+
+    # (c) spiral-of-death 上限：dt=10, fixed_dt=0.01, max_substeps=4 => 实际 4 步
+    cap = ParticleSystem(max_particles=100, fixed_dt=0.01, max_substeps=4)
+    cap.add_emitter(Emitter(x=0, y=0, rate=0.0, speed=0.0, life=10.0, size=2.0))
+    cap.add_force_field(ForceField(field_type='gravity', strength=50.0))
+    _seed(cap, 1)
+    cap.update(10.0)
+    if cap._last_substep_count != 4:
+        return "spiral-of-death 上限失效：期望 4 步，实际 %d" % cap._last_substep_count
+    if not all(math.isfinite(p.x) and math.isfinite(p.y) for p in cap.particles):
+        return "子步进后存在非有限坐标（数值发散）"
+    return ""
+
+
 def main():
     checks = [
         ("core emitter/gravity/lifetime", check_core_physics),
         ("FireworksSystem headless launch+burst", check_fireworks_headless),
         ("EffectsFactory JSON config round-trip", check_effects_factory),
         ("LightFieldSystem headless interactivity", check_light_field),
+        ("deterministic seeding (v1.2)", check_determinism),
+        ("fixed-timestep sub-stepping (v1.2)", check_substep),
     ]
     for label, func in checks:
         try:

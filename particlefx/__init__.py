@@ -39,6 +39,9 @@ from .core import (
     SpatialHashGrid,
     create_attractor,
     ParticleSystemNumpy,
+    mulberry32,
+    hash_seed,
+    derive_seed,
 )
 from .systems import LightFieldSystem, create_light_field
 
@@ -63,6 +66,9 @@ __all__ = [
     'SpatialHashGrid',
     'create_attractor',
     'ParticleSystemNumpy',
+    'mulberry32',
+    'hash_seed',
+    'derive_seed',
     # 系统
     'LightFieldSystem',
     'create_light_field',

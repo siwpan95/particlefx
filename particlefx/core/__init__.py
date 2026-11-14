@@ -27,6 +27,7 @@ from .particle import (
     create_attractor,
 )
 from .spatial_hash import SpatialHashGrid
+from .random import mulberry32, hash_seed, derive_seed
 
 __all__ = [
     'Particle',
@@ -44,6 +45,9 @@ __all__ = [
     'Renderer',
     'SpatialHashGrid',
     'create_attractor',
+    'mulberry32',
+    'hash_seed',
+    'derive_seed',
 ]
 
 # ---- NumPy 向量化层（numpy 是核心依赖，始终可用）----
