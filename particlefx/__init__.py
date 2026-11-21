@@ -48,6 +48,8 @@ from .systems import (
     MagicEffectsManager, create_magic,
 )
 
+# 2026-11-21 补：PyPI 已发布到 1.2.0（pip index 实测），tag v1.2.0 即 HEAD，
+# 而此处自 1.0.0 起三次发布（1.1.0 / 1.1.1 / 1.2.0）均漏更新，现与发布序列对齐。
 __version__ = "1.2.0"
 
 __all__ = [
